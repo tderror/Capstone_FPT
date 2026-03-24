@@ -1,0 +1,204 @@
+{
+  "metadata": {
+    "dataset": "Safe Contracts Evaluation",
+    "purpose": "Measure False Positive Rate (FPR) - all contracts are SAFE",
+    "sources": [
+      "SWC Registry (fixed versions) - https://github.com/SmartContractSecurity/SWC-registry",
+      "Solidity by Example - https://solidity-by-example.org",
+      "Solidity Documentation - https://docs.soliditylang.org"
+    ],
+    "total_contracts": 23,
+    "expected_verdict": "SAFE",
+    "categories": {
+      "swc_registry_fixed": 8,
+      "solidity_by_example": 10,
+      "solidity_docs": 5
+    }
+  },
+  "contracts": [
+    {
+      "file": "swc_registry_fixed/integer_overflow_mapping_sym_1_fixed.sol",
+      "source": "swc_registry_fixed",
+      "expected": "SAFE",
+      "solidity_version": "0.4.16",
+      "description": "SWC-101 fixed: uses SafeMath sub() with require(b <= a)",
+      "pattern": "SafeMath protection"
+    },
+    {
+      "file": "swc_registry_fixed/integer_overflow_minimal_fixed.sol",
+      "source": "swc_registry_fixed",
+      "expected": "SAFE",
+      "solidity_version": "0.4.19",
+      "description": "SWC-101 fixed: uses SafeMath sub() with require(b <= a)",
+      "pattern": "SafeMath protection"
+    },
+    {
+      "file": "swc_registry_fixed/integer_overflow_mul_fixed.sol",
+      "source": "swc_registry_fixed",
+      "expected": "SAFE",
+      "solidity_version": "0.4.19",
+      "description": "SWC-101 fixed: uses SafeMath mul() with require(c / a == b)",
+      "pattern": "SafeMath protection"
+    },
+    {
+      "file": "swc_registry_fixed/integer_overflow_multitx_multifunc_feasible_fixed.sol",
+      "source": "swc_registry_fixed",
+      "expected": "SAFE",
+      "solidity_version": "0.4.23",
+      "description": "SWC-101 fixed: multi-tx multi-func with SafeMath sub()",
+      "pattern": "SafeMath protection"
+    },
+    {
+      "file": "swc_registry_fixed/integer_overflow_multitx_onefunc_feasible_fixed.sol",
+      "source": "swc_registry_fixed",
+      "expected": "SAFE",
+      "solidity_version": "0.4.23",
+      "description": "SWC-101 fixed: multi-tx single-func with SafeMath sub()",
+      "pattern": "SafeMath protection"
+    },
+    {
+      "file": "swc_registry_fixed/overflow_simple_add_fixed.sol",
+      "source": "swc_registry_fixed",
+      "expected": "SAFE",
+      "solidity_version": "0.4.24",
+      "description": "SWC-101 fixed: uses SafeMath add() with require(c >= a)",
+      "pattern": "SafeMath protection"
+    },
+    {
+      "file": "swc_registry_fixed/simple_dao_fixed.sol",
+      "source": "swc_registry_fixed",
+      "expected": "SAFE",
+      "solidity_version": "0.4.24",
+      "description": "SWC-107 fixed: state update before external call (CEI pattern)",
+      "pattern": "CEI pattern"
+    },
+    {
+      "file": "swc_registry_fixed/modifier_reentrancy_fixed.sol",
+      "source": "swc_registry_fixed",
+      "expected": "SAFE",
+      "solidity_version": "0.5.0",
+      "description": "SWC-107 fixed: modifier order changed to prevent reentrancy",
+      "pattern": "Modifier ordering"
+    },
+    {
+      "file": "solidity_by_example/counter.sol",
+      "source": "solidity_by_example",
+      "expected": "SAFE",
+      "solidity_version": "0.8.26",
+      "description": "Simple counter with inc/dec, built-in overflow protection",
+      "pattern": "Solidity 0.8.x overflow protection"
+    },
+    {
+      "file": "solidity_by_example/erc20.sol",
+      "source": "solidity_by_example",
+      "expected": "SAFE",
+      "solidity_version": "0.8.26",
+      "description": "ERC20 token with transfer, approve, mint, burn",
+      "pattern": "Standard token, 0.8.x protection"
+    },
+    {
+      "file": "solidity_by_example/multi_sig_wallet.sol",
+      "source": "solidity_by_example",
+      "expected": "SAFE",
+      "solidity_version": "0.8.26",
+      "description": "Multi-sig wallet with submit/confirm/execute/revoke, checked .call",
+      "pattern": "Checked return value, access control"
+    },
+    {
+      "file": "solidity_by_example/english_auction.sol",
+      "source": "solidity_by_example",
+      "expected": "SAFE",
+      "solidity_version": "0.8.26",
+      "description": "English auction with bid/withdraw/end, uses .transfer()",
+      "pattern": "Standard auction, 0.8.x protection"
+    },
+    {
+      "file": "solidity_by_example/crowd_fund.sol",
+      "source": "solidity_by_example",
+      "expected": "SAFE",
+      "solidity_version": "0.8.26",
+      "description": "Crowdfunding with launch/pledge/claim/refund via ERC20",
+      "pattern": "ERC20 transfers, 0.8.x protection"
+    },
+    {
+      "file": "solidity_by_example/staking_rewards.sol",
+      "source": "solidity_by_example",
+      "expected": "SAFE",
+      "solidity_version": "0.8.26",
+      "description": "Staking rewards with stake/withdraw/getReward via ERC20",
+      "pattern": "DeFi staking, 0.8.x protection"
+    },
+    {
+      "file": "solidity_by_example/erc721.sol",
+      "source": "solidity_by_example",
+      "expected": "SAFE",
+      "solidity_version": "0.8.26",
+      "description": "ERC721 NFT with transferFrom, safeTransferFrom, mint, burn",
+      "pattern": "Standard NFT, 0.8.x protection"
+    },
+    {
+      "file": "solidity_by_example/merkle_tree.sol",
+      "source": "solidity_by_example",
+      "expected": "SAFE",
+      "solidity_version": "0.8.26",
+      "description": "Merkle proof verification, pure computation",
+      "pattern": "No state mutation risk"
+    },
+    {
+      "file": "solidity_by_example/time_lock.sol",
+      "source": "solidity_by_example",
+      "expected": "SAFE",
+      "solidity_version": "0.8.26",
+      "description": "Time lock with queue/execute/cancel, checked .call return",
+      "pattern": "Checked return value, access control, 0.8.x"
+    },
+    {
+      "file": "solidity_by_example/iterable_mapping.sol",
+      "source": "solidity_by_example",
+      "expected": "SAFE",
+      "solidity_version": "0.8.26",
+      "description": "Iterable mapping library + test contract, data structure only",
+      "pattern": "No external calls"
+    },
+    {
+      "file": "solidity_docs_example/voting.sol",
+      "source": "solidity_docs",
+      "expected": "SAFE",
+      "solidity_version": "0.7.0-0.9.0",
+      "description": "Ballot voting with delegation, no external calls",
+      "pattern": "No external calls, pure state logic"
+    },
+    {
+      "file": "solidity_docs_example/simple_auction.sol",
+      "source": "solidity_docs",
+      "expected": "SAFE",
+      "solidity_version": "0.8.4",
+      "description": "Simple auction with bid/withdraw/end, CEI pattern in withdraw",
+      "pattern": "CEI pattern, checked return value"
+    },
+    {
+      "file": "solidity_docs_example/blind_auction.sol",
+      "source": "solidity_docs",
+      "expected": "SAFE",
+      "solidity_version": "0.8.4",
+      "description": "Blind auction with bid/reveal/withdraw/end, CEI + checked calls",
+      "pattern": "CEI pattern, checked return value"
+    },
+    {
+      "file": "solidity_docs_example/safe_remote_purchase.sol",
+      "source": "solidity_docs",
+      "expected": "SAFE",
+      "solidity_version": "0.8.4",
+      "description": "Escrow purchase with state machine, state change before .call",
+      "pattern": "State machine, CEI pattern"
+    },
+    {
+      "file": "solidity_docs_example/payment_channel.sol",
+      "source": "solidity_docs",
+      "expected": "SAFE",
+      "solidity_version": "0.7.0-0.9.0",
+      "description": "Payment channel with close/extend/claimTimeout, freeze pattern",
+      "pattern": "Freeze pattern, checked return value"
+    }
+  ]
+}

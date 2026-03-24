@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Logs & Temp Files
+*.log
+*.txt
+!requirements.txt
+server_log.txt
+evaluation_log*.txt
+debug_*.txt
+debug_*.json
+quick_analysis*.txt
+
+# Slither Temp
+.slither_temp/
+slither_output.json
+
+# Backup Files
+*.bak
+*.tmp
+
+# Environment Variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ChromaDB databases (large files - rebuild if needed)
+chroma_db/
+chroma_dbs/
+*.db
+
+# Datasets (large JSON files - rebuild if needed)
+datasets/*.json
+
+# Evaluation Results (optional - keep results)
+# evaluation/evaluation_results*.json
+
+# OS
+.DS_Store
+Thumbs.db

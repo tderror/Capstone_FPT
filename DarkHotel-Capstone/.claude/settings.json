@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout 10 bash -c \"sleep 6 && curl -s http://127.0.0.1:8000/ | python -m json.tool\")"
+    ]
+  }
+}

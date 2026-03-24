@@ -1,0 +1,435 @@
+{
+  "metadata": {
+    "created": "2026-01-21T23:17:44.141629",
+    "sources": {
+      "vulnerable": "Web3Bugs (Code4rena)",
+      "safe": "GPTScan-Top200"
+    },
+    "label_mapping": {
+      "L1": "Reentrancy",
+      "L7": "IntegerUO",
+      "L4": "DenialOfService"
+    }
+  },
+  "statistics": {
+    "vulnerable": {
+      "total": 15,
+      "by_category": {
+        "Reentrancy": 3,
+        "IntegerUO": 8,
+        "DenialOfService": 4
+      }
+    },
+    "safe": {
+      "total": 30
+    },
+    "total_contracts": 45
+  },
+  "contracts": {
+    "RE_001_Admin_c3.sol": {
+      "path": "ground_truth/vulnerable/reentrancy/RE_001_Admin_c3.sol",
+      "label": "Reentrancy",
+      "web3bugs_label": "L1",
+      "bug_id": "H-01",
+      "contest_id": "3",
+      "description": "\"Re-entrancy bug allows inflating balance\"",
+      "reference": "https://code4rena.com/reports/2021-04-marginswap#h-01-re-entrancy-bug-allows-inflating-balance",
+      "solidity_version": "0.8.0",
+      "lines": 207
+    },
+    "DE_001_Admin_c3.sol": {
+      "path": "ground_truth/vulnerable/denialofservice/DE_001_Admin_c3.sol",
+      "label": "DenialOfService",
+      "web3bugs_label": "L4",
+      "bug_id": "H-09",
+      "contest_id": "3",
+      "description": "\"lastUpdatedDay not initialized\"",
+      "reference": "https://code4rena.com/reports/2021-04-marginswap#h-09-lastupdatedday-not-initialized",
+      "solidity_version": "0.8.0",
+      "lines": 207
+    },
+    "DE_002_Admin_c3.sol": {
+      "path": "ground_truth/vulnerable/denialofservice/DE_002_Admin_c3.sol",
+      "label": "DenialOfService",
+      "web3bugs_label": "L4",
+      "bug_id": "H-11",
+      "contest_id": "3",
+      "description": "\"Impossible to call withdrawReward fails due to run out of gas\"",
+      "reference": "https://code4rena.com/reports/2021-04-marginswap#h-11-impossible-to-call-withdrawreward-fails-due-to-run-out-of-gas",
+      "solidity_version": "0.8.0",
+      "lines": 207
+    },
+    "IN_001_NFTXEligiblityManager_c8.sol": {
+      "path": "ground_truth/vulnerable/integeruo/IN_001_NFTXEligiblityManager_c8.sol",
+      "label": "IntegerUO",
+      "web3bugs_label": "L7",
+      "bug_id": "H-01",
+      "contest_id": "8",
+      "description": "\"Missing overflow check in flashLoan\"",
+      "reference": "https://code4rena.com/reports/2021-05-nftx#h-01-missing-overflow-check-in-flashloan",
+      "solidity_version": "0.6.8",
+      "lines": 31
+    },
+    "DE_003_Mainframe_c10.sol": {
+      "path": "ground_truth/vulnerable/denialofservice/DE_003_Mainframe_c10.sol",
+      "label": "DenialOfService",
+      "web3bugs_label": "L4",
+      "bug_id": "H-04",
+      "contest_id": "10",
+      "description": "\"Unbounded loop in _removeNft could lead to a griefing/DOS attack\"",
+      "reference": "https://code4rena.com/reports/2021-05-visorfinance#h-04-unbounded-loop-in-_removenft-could-lead-to-a-griefingdos-attack",
+      "solidity_version": "0.7.6",
+      "lines": 131
+    },
+    "IN_002_ControlledToken_c14.sol": {
+      "path": "ground_truth/vulnerable/integeruo/IN_002_ControlledToken_c14.sol",
+      "label": "IntegerUO",
+      "web3bugs_label": "L7",
+      "bug_id": "H-02",
+      "contest_id": "14",
+      "description": "\"YearnV2YieldSource wrong subtraction in withdraw\"",
+      "reference": "https://code4rena.com/reports/2021-06-pooltogether#h-02-yearnv2yieldsource-wrong-subtraction-in-withdraw",
+      "solidity_version": "0.6.0",
+      "lines": 71
+    },
+    "IN_003_Controller_c17.sol": {
+      "path": "ground_truth/vulnerable/integeruo/IN_003_Controller_c17.sol",
+      "label": "IntegerUO",
+      "web3bugs_label": "L7",
+      "bug_id": "H-01",
+      "contest_id": "17",
+      "description": "\"implicit underflows\"",
+      "reference": "https://code4rena.com/reports/2021-06-gro#h-01-implicit-underflows",
+      "solidity_version": "0.6.0",
+      "lines": 418
+    },
+    "DE_004_ITransactionManager_c19.sol": {
+      "path": "ground_truth/vulnerable/denialofservice/DE_004_ITransactionManager_c19.sol",
+      "label": "DenialOfService",
+      "web3bugs_label": "L4",
+      "bug_id": "H-02",
+      "contest_id": "19",
+      "description": "\"activeTransactionBlocks are vulnerable to DDoS attacks\"",
+      "reference": "https://code4rena.com/reports/2021-07-connext-findings#h-02-activetransactionblocks-are-vulnerable-to-ddos-attacks",
+      "solidity_version": "0.8.4",
+      "lines": 119
+    },
+    "RE_002_IERC1155TokenReceiver_c23.sol": {
+      "path": "ground_truth/vulnerable/reentrancy/RE_002_IERC1155TokenReceiver_c23.sol",
+      "label": "Reentrancy",
+      "web3bugs_label": "L1",
+      "bug_id": "H-02",
+      "contest_id": "23",
+      "description": "\"DAO proposals can be executed by anyone due to vulnerable TimelockController\"",
+      "reference": "https://code4rena.com/reports/2021-08-notional#h-02-dao-proposals-can-be-executed-by-anyone-due-to-vulnerable-timelockcontroller",
+      "solidity_version": "0.7.0",
+      "lines": 52
+    },
+    "IN_004_TridentRouter_c29.sol": {
+      "path": "ground_truth/vulnerable/integeruo/IN_004_TridentRouter_c29.sol",
+      "label": "IntegerUO",
+      "web3bugs_label": "L7",
+      "bug_id": "H-03",
+      "contest_id": "29",
+      "description": "\"IndexPool pow overflows when weightRatio > 10.\"",
+      "reference": "https://code4rena.com/reports/2021-09-sushitrident#h-03-indexpool-pow-overflows-when-weightratio--10",
+      "solidity_version": "0.8.0",
+      "lines": 332
+    },
+    "IN_005_TridentRouter_c29.sol": {
+      "path": "ground_truth/vulnerable/integeruo/IN_005_TridentRouter_c29.sol",
+      "label": "IntegerUO",
+      "web3bugs_label": "L7",
+      "bug_id": "H-09",
+      "contest_id": "29",
+      "description": "\"Unsafe cast in IndexPool mint leads to attack\"",
+      "reference": "https://code4rena.com/reports/2021-09-sushitrident#h-09-unsafe-cast-in-indexpool-mint-leads-to-attack",
+      "solidity_version": "0.8.0",
+      "lines": 332
+    },
+    "IN_006_TridentRouter_c29.sol": {
+      "path": "ground_truth/vulnerable/integeruo/IN_006_TridentRouter_c29.sol",
+      "label": "IntegerUO",
+      "web3bugs_label": "L7",
+      "bug_id": "H-13",
+      "contest_id": "29",
+      "description": "\"Overflow in the mint function of IndexPool causes LPs’ funds to be stolen\"",
+      "reference": "https://code4rena.com/reports/2021-09-sushitrident#h-13-overflow-in-the-mint-function-of-indexpool-causes-lps-funds-to-be-stolen",
+      "solidity_version": "0.8.0",
+      "lines": 332
+    },
+    "RE_003_TridentRouter_c29.sol": {
+      "path": "ground_truth/vulnerable/reentrancy/RE_003_TridentRouter_c29.sol",
+      "label": "Reentrancy",
+      "web3bugs_label": "L1",
+      "bug_id": "H-16",
+      "contest_id": "29",
+      "description": "\"Funds in the pool could be stolen by exploiting flashSwap in HybridPool\"",
+      "reference": "https://code4rena.com/reports/2021-09-sushitrident#h-16-funds-in-the-pool-could-be-stolen-by-exploiting-flashswap-in-hybridpool",
+      "solidity_version": "0.8.0",
+      "lines": 332
+    },
+    "IN_007_TridentRouter_c35.sol": {
+      "path": "ground_truth/vulnerable/integeruo/IN_007_TridentRouter_c35.sol",
+      "label": "IntegerUO",
+      "web3bugs_label": "L7",
+      "bug_id": "H-01",
+      "contest_id": "35",
+      "description": "\"Unsafe cast in ConcentratedLiquidityPool.burn leads to attack\"",
+      "reference": "https://code4rena.com/reports/2021-09-sushitrident-2#h-01-unsafe-cast-in-concentratedliquiditypoolburn-leads-to-attack",
+      "solidity_version": "0.8.0",
+      "lines": 335
+    },
+    "IN_008_TridentRouter_c35.sol": {
+      "path": "ground_truth/vulnerable/integeruo/IN_008_TridentRouter_c35.sol",
+      "label": "IntegerUO",
+      "web3bugs_label": "L7",
+      "bug_id": "H-04",
+      "contest_id": "35",
+      "description": "\"Overflow in the mint function of ConcentratedLiquidityPool causes LPs’ funds to be stolen\"",
+      "reference": "https://code4rena.com/reports/2021-09-sushitrident-2#h-04-overflow-in-the-mint-function-of-concentratedliquiditypool-causes-lps-funds-to-be-stolen",
+      "solidity_version": "0.8.0",
+      "lines": 335
+    },
+    "SAFE_001_MRC20_0x0000000000.sol": {
+      "path": "ground_truth/safe/SAFE_001_MRC20_0x0000000000.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0000000000000000000000000000000000001010_poly\\MRC20.sol",
+      "solidity_version": "0.5.2",
+      "lines": 438
+    },
+    "SAFE_002_OwnedUpgradeabilityProxy_0x0000000000.sol": {
+      "path": "ground_truth/safe/SAFE_002_OwnedUpgradeabilityProxy_0x0000000000.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0000000000085d4780b73119b644ae5ecd22b376_eth\\OwnedUpgradeabilityProxy.sol",
+      "solidity_version": "0.4.23",
+      "lines": 181
+    },
+    "SAFE_003_BTCAdmin_0x0316eb7148.sol": {
+      "path": "ground_truth/safe/SAFE_003_BTCAdmin_0x0316eb7148.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0316eb71485b0ab14103307bf65a021042c6d380_eth\\BTCAdmin.sol",
+      "solidity_version": "0.5.11",
+      "lines": 132
+    },
+    "SAFE_004_BTCLogic_0x0316eb7148.sol": {
+      "path": "ground_truth/safe/SAFE_004_BTCLogic_0x0316eb7148.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0316eb71485b0ab14103307bf65a021042c6d380_eth\\BTCLogic.sol",
+      "solidity_version": "0.5.11",
+      "lines": 134
+    },
+    "SAFE_005_BTCStorage_0x0316eb7148.sol": {
+      "path": "ground_truth/safe/SAFE_005_BTCStorage_0x0316eb7148.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0316eb71485b0ab14103307bf65a021042c6d380_eth\\BTCStorage.sol",
+      "solidity_version": "0.5.11",
+      "lines": 54
+    },
+    "SAFE_006_BTCToken_0x0316eb7148.sol": {
+      "path": "ground_truth/safe/SAFE_006_BTCToken_0x0316eb7148.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0316eb71485b0ab14103307bf65a021042c6d380_eth\\BTCToken.sol",
+      "solidity_version": "0.5.11",
+      "lines": 97
+    },
+    "SAFE_007_ontainer_0x0316eb7148.sol": {
+      "path": "ground_truth/safe/SAFE_007_ontainer_0x0316eb7148.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0316eb71485b0ab14103307bf65a021042c6d380_eth\\ontainer.sol",
+      "solidity_version": "0.5.11",
+      "lines": 61
+    },
+    "SAFE_008_Usdc_0x04068da6c8.sol": {
+      "path": "ground_truth/safe/SAFE_008_Usdc_0x04068da6c8.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x04068da6c83afcfa0e13ba15a6696662335d5b75_fantom\\Usdc.sol",
+      "solidity_version": "0.8.1",
+      "lines": 419
+    },
+    "SAFE_009_AnyswapV3ERC20_0x049d680296.sol": {
+      "path": "ground_truth/safe/SAFE_009_AnyswapV3ERC20_0x049d680296.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x049d68029688eabf473097a2fc38ef61633a3c7a_fantom\\AnyswapV3ERC20.sol",
+      "solidity_version": "0.8.2",
+      "lines": 416
+    },
+    "SAFE_010_AnyswapV5ERC20_0x0615dbba33.sol": {
+      "path": "ground_truth/safe/SAFE_010_AnyswapV5ERC20_0x0615dbba33.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0615dbba33fe61a31c7ed131bda6655ed76748b1_fantom\\AnyswapV5ERC20.sol",
+      "solidity_version": "0.8.2",
+      "lines": 493
+    },
+    "SAFE_011_UChildERC20Proxy_0x0b220b82f3.sol": {
+      "path": "ground_truth/safe/SAFE_011_UChildERC20Proxy_0x0b220b82f3.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0b220b82f3ea3b7f6d9a1d8ab58930c064a2b5bf_poly\\UChildERC20Proxy.sol",
+      "solidity_version": "0.6.6",
+      "lines": 130
+    },
+    "SAFE_012_UChildERC20Proxy_0x0b3f868e0b.sol": {
+      "path": "ground_truth/safe/SAFE_012_UChildERC20Proxy_0x0b3f868e0b.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0b3f868e0be5597d5db7feb59e1cadbb0fdda50a_poly\\UChildERC20Proxy.sol",
+      "solidity_version": "0.6.6",
+      "lines": 130
+    },
+    "SAFE_013_YFI_0x0bc529c00c.sol": {
+      "path": "ground_truth/safe/SAFE_013_YFI_0x0bc529c00c.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e_eth\\YFI.sol",
+      "solidity_version": "0.5.16",
+      "lines": 191
+    },
+    "SAFE_014_BAToken_0x0d8775f648.sol": {
+      "path": "ground_truth/safe/SAFE_014_BAToken_0x0d8775f648.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0d8775f648430679a709e98d2b0cb6250d2887ef_eth\\BAToken.sol",
+      "solidity_version": "0.4.10",
+      "lines": 146
+    },
+    "SAFE_015_BEP20UpgradeableProxy_0x0d8ce2a99b.sol": {
+      "path": "ground_truth/safe/SAFE_015_BEP20UpgradeableProxy_0x0d8ce2a99b.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0d8ce2a99bb6e3b7db580ed848240e4a0f9ae153_bsc\\BEP20UpgradeableProxy.sol",
+      "solidity_version": "0.6.0",
+      "lines": 417
+    },
+    "SAFE_016_MANAToken_0x0f5d2fb29f.sol": {
+      "path": "ground_truth/safe/SAFE_016_MANAToken_0x0f5d2fb29f.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x0f5d2fb29fb7d3cfee444a200298f468908cc942_eth\\MANAToken.sol",
+      "solidity_version": "0.4.11",
+      "lines": 222
+    },
+    "SAFE_017_UChildERC20Proxy_0x101a023270.sol": {
+      "path": "ground_truth/safe/SAFE_017_UChildERC20Proxy_0x101a023270.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x101a023270368c0d50bffb62780f4afd4ea79c35_poly\\UChildERC20Proxy.sol",
+      "solidity_version": "0.6.6",
+      "lines": 130
+    },
+    "SAFE_018_BEP20UpgradeableProxy_0x101d824284.sol": {
+      "path": "ground_truth/safe/SAFE_018_BEP20UpgradeableProxy_0x101d824284.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x101d82428437127bf1608f699cd651e6abf9766e_bsc\\BEP20UpgradeableProxy.sol",
+      "solidity_version": "0.6.0",
+      "lines": 417
+    },
+    "SAFE_019_MXToken_0x11eef04c88.sol": {
+      "path": "ground_truth/safe/SAFE_019_MXToken_0x11eef04c88.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x11eef04c884e24d9b7b4760e7476d06ddf797f36_eth\\MXToken.sol",
+      "solidity_version": "0.4.19",
+      "lines": 134
+    },
+    "SAFE_020_BEP20UpgradeableProxy_0x14016e85a2.sol": {
+      "path": "ground_truth/safe/SAFE_020_BEP20UpgradeableProxy_0x14016e85a2.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x14016e85a25aeb13065688cafb43044c2ef86784_bsc\\BEP20UpgradeableProxy.sol",
+      "solidity_version": "0.6.0",
+      "lines": 413
+    },
+    "SAFE_021_OFT_0x152649ea73.sol": {
+      "path": "ground_truth/safe/SAFE_021_OFT_0x152649ea73.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x152649ea73beab28c5b49b26eb48f7ead6d4c898_eth\\OFT.sol",
+      "solidity_version": "0.8.0",
+      "lines": 105
+    },
+    "SAFE_022_afeMath_0x15d4c048f8.sol": {
+      "path": "ground_truth/safe/SAFE_022_afeMath_0x15d4c048f8.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x15d4c048f83bd7e37d49ea4c83a07267ec4203da_eth\\afeMath.sol",
+      "solidity_version": "0.6.0",
+      "lines": 157
+    },
+    "SAFE_023_ala_0x15d4c048f8.sol": {
+      "path": "ground_truth/safe/SAFE_023_ala_0x15d4c048f8.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x15d4c048f83bd7e37d49ea4c83a07267ec4203da_eth\\ala.sol",
+      "solidity_version": "0.6.2",
+      "lines": 58
+    },
+    "SAFE_024_ddress_0x15d4c048f8.sol": {
+      "path": "ground_truth/safe/SAFE_024_ddress_0x15d4c048f8.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x15d4c048f83bd7e37d49ea4c83a07267ec4203da_eth\\ddress.sol",
+      "solidity_version": "0.6.2",
+      "lines": 151
+    },
+    "SAFE_025_ERC20_0x15d4c048f8.sol": {
+      "path": "ground_truth/safe/SAFE_025_ERC20_0x15d4c048f8.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x15d4c048f83bd7e37d49ea4c83a07267ec4203da_eth\\ERC20.sol",
+      "solidity_version": "0.6.0",
+      "lines": 72
+    },
+    "SAFE_026_RC20_0x15d4c048f8.sol": {
+      "path": "ground_truth/safe/SAFE_026_RC20_0x15d4c048f8.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x15d4c048f83bd7e37d49ea4c83a07267ec4203da_eth\\RC20.sol",
+      "solidity_version": "0.6.0",
+      "lines": 315
+    },
+    "SAFE_027_UChildERC20Proxy_0x172370d5cd.sol": {
+      "path": "ground_truth/safe/SAFE_027_UChildERC20Proxy_0x172370d5cd.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x172370d5cd63279efa6d502dab29171933a610af_poly\\UChildERC20Proxy.sol",
+      "solidity_version": "0.6.6",
+      "lines": 130
+    },
+    "SAFE_028_AudiusAdminUpgradeabilityProxy_0x18aaa71157.sol": {
+      "path": "ground_truth/safe/SAFE_028_AudiusAdminUpgradeabilityProxy_0x18aaa71157.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x18aaa7115705e8be94bffebde57af9bfc265b998_eth\\AudiusAdminUpgradeabilityProxy.sol",
+      "solidity_version": "0.5.0",
+      "lines": 231
+    },
+    "SAFE_029_BitgetToken_0x19de6b897e.sol": {
+      "path": "ground_truth/safe/SAFE_029_BitgetToken_0x19de6b897e.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x19de6b897ed14a376dda0fe53a5420d2ac828a28_eth\\BitgetToken.sol",
+      "solidity_version": "0.4.23",
+      "lines": 128
+    },
+    "SAFE_030_UChildERC20Proxy_0x1b815d120b.sol": {
+      "path": "ground_truth/safe/SAFE_030_UChildERC20Proxy_0x1b815d120b.sol",
+      "label": "NonVulnerable",
+      "source": "GPTScan-Top200",
+      "original_path": "0x1b815d120b3ef02039ee11dc2d33de7aa4a8c603_poly\\UChildERC20Proxy.sol",
+      "solidity_version": "0.6.6",
+      "lines": 130
+    }
+  }
+}
