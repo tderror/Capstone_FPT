@@ -96,29 +96,43 @@ class RelevanceReranker:
         # Sigmoid is stable regardless of score distribution (works for 1 candidate or many)
         norm_scores = [float(1.0 / (1.0 + np.exp(-float(s)))) for s in scores]
 
-        # Attach scores
+        # Attach scores — keep original similarity (bi-encoder cosine) intact
         for i, c in enumerate(candidates):
             c["bi_encoder_score"] = c.get("similarity", 0)
             c["cross_encoder_score"] = norm_scores[i]
-            c["similarity"] = round(
+            c["combined_score"] = round(
                 0.4 * c["bi_encoder_score"] + 0.6 * c["cross_encoder_score"], 4
             )
 
-        return sorted(candidates, key=lambda x: x["similarity"], reverse=True)[:top_k]
+        return sorted(candidates, key=lambda x: x["combined_score"], reverse=True)[:top_k]
 
     def _build_doc_text(self, candidate: Dict) -> str:
-        """Build text representation of a candidate for cross-encoder"""
+        """Build text representation of a candidate for cross-encoder.
+
+        Format matches the NL+code style used in rerank queries so that
+        ms-marco cross-encoder can measure genuine relevance.
+        """
         parts = []
         vtype = candidate.get("vulnerability_type", "")
+        swc = candidate.get("swc_id", "")
         if vtype:
-            parts.append(f"Vulnerability: {vtype}")
+            parts.append(f"Solidity vulnerability: {vtype} ({swc})")
+        func = candidate.get("function", "")
+        if func:
+            parts.append(f"in function {func}")
         root = candidate.get("root_cause", "")
         if root:
             parts.append(f"Root cause: {root}")
+        trigger = candidate.get("trigger_condition", "")
+        if trigger:
+            parts.append(f"Trigger: {trigger}")
+        fix = candidate.get("fix_solution", "")
+        if fix:
+            parts.append(f"Fix: {fix}")
         code = candidate.get("code_snippet_vulnerable", "")
         if code:
-            parts.append(f"Code: {code[:500]}")
-        return " | ".join(parts) if parts else str(candidate)
+            parts.append(f"Code: {code[:400]}")
+        return ". ".join(parts) if parts else str(candidate)
 
 
 # =============================================================================
@@ -144,8 +158,16 @@ class CRAGEvaluator:
         """
         Evaluate retrieval quality and determine action.
 
+        Uses combined_score (bi-encoder + cross-encoder) instead of cross-encoder
+        alone, because ms-marco cross-encoder is an NL model that may undervalue
+        code-similar results that CodeRankEmbed (code-specialized) scored highly.
+
+        Bi-encoder floor: if CodeRankEmbed gives high confidence (>=0.75),
+        prevent the NL cross-encoder from dropping all evidence to INCORRECT.
+
         Args:
-            candidates: Reranked candidates (must have 'cross_encoder_score' field)
+            candidates: Reranked candidates (must have 'combined_score' and
+                        'bi_encoder_score' fields from RelevanceReranker)
 
         Returns:
             (action, filtered_candidates):
@@ -155,16 +177,26 @@ class CRAGEvaluator:
         if not candidates:
             return "INCORRECT", []
 
-        top_score = candidates[0].get("cross_encoder_score", 0)
+        top_combined = candidates[0].get("combined_score", 0)
+        top_bi = candidates[0].get("bi_encoder_score", 0)
 
-        if top_score >= self.CORRECT_THRESHOLD:
-            return "CORRECT", candidates
-
-        elif top_score >= self.INCORRECT_THRESHOLD:
-            # AMBIGUOUS: keep only candidates above incorrect threshold
+        # Bi-encoder floor: CodeRankEmbed is code-specialized (21M code examples).
+        # If it says "highly relevant" but NL cross-encoder disagrees,
+        # preserve evidence as AMBIGUOUS rather than dropping entirely.
+        if top_bi >= 0.75 and top_combined < self.INCORRECT_THRESHOLD:
             filtered = [
                 c for c in candidates
-                if c.get("cross_encoder_score", 0) >= self.INCORRECT_THRESHOLD
+                if c.get("bi_encoder_score", 0) >= 0.6
+            ]
+            return "AMBIGUOUS", filtered
+
+        if top_combined >= self.CORRECT_THRESHOLD:
+            return "CORRECT", candidates
+
+        elif top_combined >= self.INCORRECT_THRESHOLD:
+            filtered = [
+                c for c in candidates
+                if c.get("combined_score", 0) >= self.INCORRECT_THRESHOLD
             ]
             return "AMBIGUOUS", filtered
 
@@ -280,13 +312,12 @@ class SmartRAGSystem:
                     FieldCondition(key="swc_name", match=MatchValue(value=mapped))
                 ])
 
-            # Over-retrieve for reranking
-            retrieve_k = top_k * 3
-
+            # No over-retrieve here — caller (main.py) controls pool size
+            # Reranking happens externally with the full candidate pool
             query_result = self.qdrant.query_points(
                 collection_name=COLLECTION_NAME,
                 query=query_vector,
-                limit=retrieve_k,
+                limit=top_k,
                 query_filter=qdrant_filter,
                 with_payload=True,
                 score_threshold=0.3,
@@ -311,8 +342,8 @@ class SmartRAGSystem:
                     "fix_solution": p.get("fix_solution", ""),
                 })
 
-            formatted = sorted(formatted, key=lambda x: x["similarity"], reverse=True)[:top_k]
-            print(f"[SmartRAG v6] Bi-encoder top-{top_k}: {len(formatted)} results")
+            formatted = sorted(formatted, key=lambda x: x["similarity"], reverse=True)
+            print(f"[SmartRAG v6] Bi-encoder retrieved: {len(formatted)} results")
 
             return formatted
 

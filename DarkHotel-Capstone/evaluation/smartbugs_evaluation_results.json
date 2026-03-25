@@ -1,0 +1,1844 @@
+{
+  "metadata": {
+    "timestamp": "2026-03-25T15:54:48.685982",
+    "dataset": "SmartBugs-Curated",
+    "total_contracts": 98,
+    "evaluated": 97,
+    "errors": 1,
+    "category_filter": null,
+    "api_url": "http://localhost:8000/analyze"
+  },
+  "metrics": {
+    "tp": 97,
+    "fn": 0,
+    "unknown": 0,
+    "total": 97,
+    "recall": 1.0,
+    "type_accuracy": 0.9897
+  },
+  "per_category": {
+    "Reentrancy": {
+      "total": 31,
+      "detected": 31,
+      "type_match": 30
+    },
+    "Integer Overflow/Underflow": {
+      "total": 15,
+      "detected": 15,
+      "type_match": 15
+    },
+    "Unchecked Return Value": {
+      "total": 51,
+      "detected": 51,
+      "type_match": 51
+    }
+  },
+  "per_type_recall": {
+    "SWC-107": {
+      "label": "Reentrancy",
+      "detected": 30,
+      "total": 31,
+      "recall": 0.9677
+    },
+    "SWC-101": {
+      "label": "Integer Overflow/Underflow",
+      "detected": 15,
+      "total": 15,
+      "recall": 1.0
+    },
+    "SWC-104": {
+      "label": "Unchecked Return Value",
+      "detected": 51,
+      "total": 51,
+      "recall": 1.0
+    }
+  },
+  "secondary_analysis": {
+    "total": 39,
+    "verified_true": 36,
+    "false_alarm": 3,
+    "false_alarm_details": [
+      {
+        "file": "0x19cf8481ea15427a98ba3cdd6d9e14690011ab10.sol",
+        "expected": "SWC-104",
+        "false_alarm_swc": "SWC-101",
+        "reason": "SafeMath is used"
+      },
+      {
+        "file": "0x663e4229142a27f00bafb5d087e1e730648314c3.sol",
+        "expected": "SWC-104",
+        "false_alarm_swc": "SWC-107",
+        "reason": "No .call{value:}() \u2014 only .send()/.transfer() (2300 gas)"
+      },
+      {
+        "file": "etherpot_lotto.sol",
+        "expected": "SWC-104",
+        "false_alarm_swc": "SWC-107",
+        "reason": "No .call{value:}() \u2014 only .send()/.transfer() (2300 gas)"
+      }
+    ]
+  },
+  "results": [
+    {
+      "file": "reentrancy/0x01f8c4e3fa3edeb29e514cba738d87ce8c091d3f.sol",
+      "filename": "0x01f8c4e3fa3edeb29e514cba738d87ce8c091d3f.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 45.7
+    },
+    {
+      "file": "reentrancy/0x23a91059fdc9579a9fbd0edc5f2ea0bfdb70deb4.sol",
+      "filename": "0x23a91059fdc9579a9fbd0edc5f2ea0bfdb70deb4.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 44.2
+    },
+    {
+      "file": "reentrancy/0x4320e6f8c05b27ab4707cd1f6d5ce6f3e4b3a5a1.sol",
+      "filename": "0x4320e6f8c05b27ab4707cd1f6d5ce6f3e4b3a5a1.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 43.2
+    },
+    {
+      "file": "reentrancy/0x4e73b32ed6c35f570686b89848e5f39f20ecc106.sol",
+      "filename": "0x4e73b32ed6c35f570686b89848e5f39f20ecc106.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow and Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 41.1
+    },
+    {
+      "file": "reentrancy/0x561eac93c92360949ab1f1403323e6db345cbf31.sol",
+      "filename": "0x561eac93c92360949ab1f1403323e6db345cbf31.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 34.5
+    },
+    {
+      "file": "reentrancy/0x627fa62ccbb1c1b04ffaecd72a53e37fc0e17839.sol",
+      "filename": "0x627fa62ccbb1c1b04ffaecd72a53e37fc0e17839.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 66.1
+    },
+    {
+      "file": "reentrancy/0x7541b76cb60f4c60af330c208b0623b7f54bf615.sol",
+      "filename": "0x7541b76cb60f4c60af330c208b0623b7f54bf615.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 35.1
+    },
+    {
+      "file": "reentrancy/0x7a8721a9d64c74da899424c1b52acbf58ddc9782.sol",
+      "filename": "0x7a8721a9d64c74da899424c1b52acbf58ddc9782.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 38.0
+    },
+    {
+      "file": "reentrancy/0x7b368c4e805c3870b6c49a3f1f49f69af8662cf3.sol",
+      "filename": "0x7b368c4e805c3870b6c49a3f1f49f69af8662cf3.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 51.8
+    },
+    {
+      "file": "reentrancy/0x8c7777c45481dba411450c228cb692ac3d550344.sol",
+      "filename": "0x8c7777c45481dba411450c228cb692ac3d550344.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 35.6
+    },
+    {
+      "file": "reentrancy/0x93c32845fae42c83a70e5f06214c8433665c2ab5.sol",
+      "filename": "0x93c32845fae42c83a70e5f06214c8433665c2ab5.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 38.3
+    },
+    {
+      "file": "reentrancy/0x941d225236464a25eb18076df7da6a91d0f95e9e.sol",
+      "filename": "0x941d225236464a25eb18076df7da6a91d0f95e9e.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 39.0
+    },
+    {
+      "file": "reentrancy/0x96edbe868531bd23a6c05e9d0c424ea64fb1b78b.sol",
+      "filename": "0x96edbe868531bd23a6c05e9d0c424ea64fb1b78b.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 45.9
+    },
+    {
+      "file": "reentrancy/0xaae1f51cf3339f18b6d3f3bdc75a5facd744b0b8.sol",
+      "filename": "0xaae1f51cf3339f18b6d3f3bdc75a5facd744b0b8.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow/Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 39.4
+    },
+    {
+      "file": "reentrancy/0xb5e1b1ee15c6fa0e48fce100125569d430f1bd12.sol",
+      "filename": "0xb5e1b1ee15c6fa0e48fce100125569d430f1bd12.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 45.5
+    },
+    {
+      "file": "reentrancy/0xb93430ce38ac4a6bb47fb1fc085ea669353fd89e.sol",
+      "filename": "0xb93430ce38ac4a6bb47fb1fc085ea669353fd89e.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 39.7
+    },
+    {
+      "file": "reentrancy/0xbaf51e761510c1a11bf48dd87c0307ac8a8c8a4f.sol",
+      "filename": "0xbaf51e761510c1a11bf48dd87c0307ac8a8c8a4f.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 47.3
+    },
+    {
+      "file": "reentrancy/0xbe4041d55db380c5ae9d4a9b9703f1ed4e7e3888.sol",
+      "filename": "0xbe4041d55db380c5ae9d4a9b9703f1ed4e7e3888.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 34.9
+    },
+    {
+      "file": "reentrancy/0xcead721ef5b11f1a7b530171aab69b16c5e66b6e.sol",
+      "filename": "0xcead721ef5b11f1a7b530171aab69b16c5e66b6e.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 37.9
+    },
+    {
+      "file": "reentrancy/0xf015c35649c82f5467c9c74b7f28ee67665aad68.sol",
+      "filename": "0xf015c35649c82f5467c9c74b7f28ee67665aad68.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow/Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 37.5
+    },
+    {
+      "file": "reentrancy/etherbank.sol",
+      "filename": "etherbank.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 40.4
+    },
+    {
+      "file": "reentrancy/etherstore.sol",
+      "filename": "etherstore.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 40.6
+    },
+    {
+      "file": "reentrancy/modifier_reentrancy.sol",
+      "filename": "modifier_reentrancy.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 41.4
+    },
+    {
+      "file": "reentrancy/reentrance.sol",
+      "filename": "reentrance.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 50.3
+    },
+    {
+      "file": "reentrancy/reentrancy_bonus.sol",
+      "filename": "reentrancy_bonus.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 35.0
+    },
+    {
+      "file": "reentrancy/reentrancy_cross_function.sol",
+      "filename": "reentrancy_cross_function.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [],
+      "type_match": false,
+      "correct": true,
+      "time_seconds": 46.5
+    },
+    {
+      "file": "reentrancy/reentrancy_dao.sol",
+      "filename": "reentrancy_dao.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 44.4
+    },
+    {
+      "file": "reentrancy/reentrancy_insecure.sol",
+      "filename": "reentrancy_insecure.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 40.7
+    },
+    {
+      "file": "reentrancy/reentrancy_simple.sol",
+      "filename": "reentrancy_simple.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 38.5
+    },
+    {
+      "file": "reentrancy/simple_dao.sol",
+      "filename": "simple_dao.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Unchecked External Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 48.5
+    },
+    {
+      "file": "reentrancy/spank_chain_payment.sol",
+      "filename": "spank_chain_payment.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Integer Overflow/Underflow",
+          "swc_id": "SWC-101"
+        },
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 81.6
+    },
+    {
+      "file": "arithmetic/BECToken.sol",
+      "filename": "BECToken.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 49.5
+    },
+    {
+      "file": "arithmetic/insecure_transfer.sol",
+      "filename": "insecure_transfer.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 58.3
+    },
+    {
+      "file": "arithmetic/integer_overflow_1.sol",
+      "filename": "integer_overflow_1.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 29.9
+    },
+    {
+      "file": "arithmetic/integer_overflow_add.sol",
+      "filename": "integer_overflow_add.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 31.4
+    },
+    {
+      "file": "arithmetic/integer_overflow_benign_1.sol",
+      "filename": "integer_overflow_benign_1.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 33.4
+    },
+    {
+      "file": "arithmetic/integer_overflow_mapping_sym_1.sol",
+      "filename": "integer_overflow_mapping_sym_1.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 32.8
+    },
+    {
+      "file": "arithmetic/integer_overflow_minimal.sol",
+      "filename": "integer_overflow_minimal.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 27.2
+    },
+    {
+      "file": "arithmetic/integer_overflow_mul.sol",
+      "filename": "integer_overflow_mul.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 27.2
+    },
+    {
+      "file": "arithmetic/integer_overflow_multitx_multifunc_feasible.sol",
+      "filename": "integer_overflow_multitx_multifunc_feasible.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 35.5
+    },
+    {
+      "file": "arithmetic/integer_overflow_multitx_onefunc_feasible.sol",
+      "filename": "integer_overflow_multitx_onefunc_feasible.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 27.7
+    },
+    {
+      "file": "arithmetic/overflow_simple_add.sol",
+      "filename": "overflow_simple_add.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 35.2
+    },
+    {
+      "file": "arithmetic/overflow_single_tx.sol",
+      "filename": "overflow_single_tx.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Overflow and Underflow",
+          "swc_id": "SWC-101"
+        },
+        {
+          "type": "Integer Overflow and Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 44.4
+    },
+    {
+      "file": "arithmetic/timelock.sol",
+      "filename": "timelock.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 41.4
+    },
+    {
+      "file": "arithmetic/token.sol",
+      "filename": "token.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 40.6
+    },
+    {
+      "file": "arithmetic/tokensalechallenge.sol",
+      "filename": "tokensalechallenge.sol",
+      "expected_type": "Integer Overflow/Underflow",
+      "expected_swc": "SWC-101",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 42.8
+    },
+    {
+      "file": "unchecked_low_level_calls/0x07f7ecb66d788ab01dc93b9b71a88401de7d0f2e.sol",
+      "filename": "0x07f7ecb66d788ab01dc93b9b71a88401de7d0f2e.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 57.4
+    },
+    {
+      "file": "unchecked_low_level_calls/0x0cbe050f75bc8f8c2d6c0d249fea125fd6e1acc9.sol",
+      "filename": "0x0cbe050f75bc8f8c2d6c0d249fea125fd6e1acc9.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 32.9
+    },
+    {
+      "file": "unchecked_low_level_calls/0x19cf8481ea15427a98ba3cdd6d9e14690011ab10.sol",
+      "filename": "0x19cf8481ea15427a98ba3cdd6d9e14690011ab10.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Integer Overflow and Underflow",
+          "swc_id": "SWC-101"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 80.4
+    },
+    {
+      "file": "unchecked_low_level_calls/0x2972d548497286d18e92b5fa1f8f9139e5653fd2.sol",
+      "filename": "0x2972d548497286d18e92b5fa1f8f9139e5653fd2.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 39.6
+    },
+    {
+      "file": "unchecked_low_level_calls/0x39cfd754c85023648bf003bea2dd498c5612abfa.sol",
+      "filename": "0x39cfd754c85023648bf003bea2dd498c5612abfa.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 53.7
+    },
+    {
+      "file": "unchecked_low_level_calls/0x3e013fc32a54c4c5b6991ba539dcd0ec4355c859.sol",
+      "filename": "0x3e013fc32a54c4c5b6991ba539dcd0ec4355c859.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 50.9
+    },
+    {
+      "file": "unchecked_low_level_calls/0x3f2ef511aa6e75231e4deafc7a3d2ecab3741de2.sol",
+      "filename": "0x3f2ef511aa6e75231e4deafc7a3d2ecab3741de2.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 45.9
+    },
+    {
+      "file": "unchecked_low_level_calls/0x4051334adc52057aca763453820cb0e045076ef3.sol",
+      "filename": "0x4051334adc52057aca763453820cb0e045076ef3.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 45.9
+    },
+    {
+      "file": "unchecked_low_level_calls/0x4a66ad0bca2d700f11e1f2fc2c106f7d3264504c.sol",
+      "filename": "0x4a66ad0bca2d700f11e1f2fc2c106f7d3264504c.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 48.9
+    },
+    {
+      "file": "unchecked_low_level_calls/0x4b71ad9c1a84b9b643aa54fdd66e2dec96e8b152.sol",
+      "filename": "0x4b71ad9c1a84b9b643aa54fdd66e2dec96e8b152.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 31.2
+    },
+    {
+      "file": "unchecked_low_level_calls/0x524960d55174d912768678d8c606b4d50b79d7b1.sol",
+      "filename": "0x524960d55174d912768678d8c606b4d50b79d7b1.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 30.7
+    },
+    {
+      "file": "unchecked_low_level_calls/0x52d2e0f9b01101a59b38a3d05c80b7618aeed984.sol",
+      "filename": "0x52d2e0f9b01101a59b38a3d05c80b7618aeed984.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 53.6
+    },
+    {
+      "file": "unchecked_low_level_calls/0x5aa88d2901c68fda244f1d0584400368d2c8e739.sol",
+      "filename": "0x5aa88d2901c68fda244f1d0584400368d2c8e739.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 57.4
+    },
+    {
+      "file": "unchecked_low_level_calls/0x610495793564aed0f9c7fc48dc4c7c9151d34fd6.sol",
+      "filename": "0x610495793564aed0f9c7fc48dc4c7c9151d34fd6.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 43.6
+    },
+    {
+      "file": "unchecked_low_level_calls/0x627fa62ccbb1c1b04ffaecd72a53e37fc0e17839.sol",
+      "filename": "0x627fa62ccbb1c1b04ffaecd72a53e37fc0e17839.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 48.1
+    },
+    {
+      "file": "unchecked_low_level_calls/0x663e4229142a27f00bafb5d087e1e730648314c3.sol",
+      "filename": "0x663e4229142a27f00bafb5d087e1e730648314c3.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 98.7
+    },
+    {
+      "file": "unchecked_low_level_calls/0x70f9eddb3931491aab1aeafbc1e7f1ca2a012db4.sol",
+      "filename": "0x70f9eddb3931491aab1aeafbc1e7f1ca2a012db4.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 41.1
+    },
+    {
+      "file": "unchecked_low_level_calls/0x78c2a1e91b52bca4130b6ed9edd9fbcfd4671c37.sol",
+      "filename": "0x78c2a1e91b52bca4130b6ed9edd9fbcfd4671c37.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 53.6
+    },
+    {
+      "file": "unchecked_low_level_calls/0x7a4349a749e59a5736efb7826ee3496a2dfd5489.sol",
+      "filename": "0x7a4349a749e59a5736efb7826ee3496a2dfd5489.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 43.2
+    },
+    {
+      "file": "unchecked_low_level_calls/0x7d09edb07d23acb532a82be3da5c17d9d85806b4.sol",
+      "filename": "0x7d09edb07d23acb532a82be3da5c17d9d85806b4.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 53.7
+    },
+    {
+      "file": "unchecked_low_level_calls/0x806a6bd219f162442d992bdc4ee6eba1f2c5a707.sol",
+      "filename": "0x806a6bd219f162442d992bdc4ee6eba1f2c5a707.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 45.9
+    },
+    {
+      "file": "unchecked_low_level_calls/0x84d9ec85c9c568eb332b7226a8f826d897e0a4a8.sol",
+      "filename": "0x84d9ec85c9c568eb332b7226a8f826d897e0a4a8.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 32.7
+    },
+    {
+      "file": "unchecked_low_level_calls/0x89c1b3807d4c67df034fffb62f3509561218d30b.sol",
+      "filename": "0x89c1b3807d4c67df034fffb62f3509561218d30b.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 62.0
+    },
+    {
+      "file": "unchecked_low_level_calls/0x8fd1e427396ddb511533cf9abdbebd0a7e08da35.sol",
+      "filename": "0x8fd1e427396ddb511533cf9abdbebd0a7e08da35.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 67.0
+    },
+    {
+      "file": "unchecked_low_level_calls/0x958a8f594101d2c0485a52319f29b2647f2ebc06.sol",
+      "filename": "0x958a8f594101d2c0485a52319f29b2647f2ebc06.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 46.4
+    },
+    {
+      "file": "unchecked_low_level_calls/0x9d06cbafa865037a01d322d3f4222fa3e04e5488.sol",
+      "filename": "0x9d06cbafa865037a01d322d3f4222fa3e04e5488.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 46.8
+    },
+    {
+      "file": "unchecked_low_level_calls/0xa1fceeff3acc57d257b917e30c4df661401d6431.sol",
+      "filename": "0xa1fceeff3acc57d257b917e30c4df661401d6431.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 46.0
+    },
+    {
+      "file": "unchecked_low_level_calls/0xa46edd6a9a93feec36576ee5048146870ea2c3ae.sol",
+      "filename": "0xa46edd6a9a93feec36576ee5048146870ea2c3ae.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 38.1
+    },
+    {
+      "file": "unchecked_low_level_calls/0xb0510d68f210b7db66e8c7c814f22680f2b8d1d6.sol",
+      "filename": "0xb0510d68f210b7db66e8c7c814f22680f2b8d1d6.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Unchecked Low-Level Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 59.5
+    },
+    {
+      "file": "unchecked_low_level_calls/0xb11b2fed6c9354f7aa2f658d3b4d7b31d8a13b77.sol",
+      "filename": "0xb11b2fed6c9354f7aa2f658d3b4d7b31d8a13b77.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 46.9
+    },
+    {
+      "file": "unchecked_low_level_calls/0xb37f18af15bafb869a065b61fc83cfc44ed9cc27.sol",
+      "filename": "0xb37f18af15bafb869a065b61fc83cfc44ed9cc27.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 51.0
+    },
+    {
+      "file": "unchecked_low_level_calls/0xb620cee6b52f96f3c6b253e6eea556aa2d214a99.sol",
+      "filename": "0xb620cee6b52f96f3c6b253e6eea556aa2d214a99.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        },
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 53.7
+    },
+    {
+      "file": "unchecked_low_level_calls/0xb7c5c5aa4d42967efe906e1b66cb8df9cebf04f7.sol",
+      "filename": "0xb7c5c5aa4d42967efe906e1b66cb8df9cebf04f7.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 42.2
+    },
+    {
+      "file": "unchecked_low_level_calls/0xbaa3de6504690efb064420d89e871c27065cdd52.sol",
+      "filename": "0xbaa3de6504690efb064420d89e871c27065cdd52.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 55.8
+    },
+    {
+      "file": "unchecked_low_level_calls/0xbebbfe5b549f5db6e6c78ca97cac19d1fb03082c.sol",
+      "filename": "0xbebbfe5b549f5db6e6c78ca97cac19d1fb03082c.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 50.8
+    },
+    {
+      "file": "unchecked_low_level_calls/0xd2018bfaa266a9ec0a1a84b061640faa009def76.sol",
+      "filename": "0xd2018bfaa266a9ec0a1a84b061640faa009def76.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 50.0
+    },
+    {
+      "file": "unchecked_low_level_calls/0xd5967fed03e85d1cce44cab284695b41bc675b5c.sol",
+      "filename": "0xd5967fed03e85d1cce44cab284695b41bc675b5c.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 33.7
+    },
+    {
+      "file": "unchecked_low_level_calls/0xdb1c55f6926e7d847ddf8678905ad871a68199d2.sol",
+      "filename": "0xdb1c55f6926e7d847ddf8678905ad871a68199d2.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 46.0
+    },
+    {
+      "file": "unchecked_low_level_calls/0xe09b1ab8111c2729a76f16de96bc86a7af837928.sol",
+      "filename": "0xe09b1ab8111c2729a76f16de96bc86a7af837928.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 70.4
+    },
+    {
+      "file": "unchecked_low_level_calls/0xe4eabdca81e31d9acbc4af76b30f532b6ed7f3bf.sol",
+      "filename": "0xe4eabdca81e31d9acbc4af76b30f532b6ed7f3bf.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 35.8
+    },
+    {
+      "file": "unchecked_low_level_calls/0xe82f0742a71a02b9e9ffc142fdcb6eb1ed06fb87.sol",
+      "filename": "0xe82f0742a71a02b9e9ffc142fdcb6eb1ed06fb87.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 50.3
+    },
+    {
+      "file": "unchecked_low_level_calls/0xe894d54dca59cb53fe9cbc5155093605c7068220.sol",
+      "filename": "0xe894d54dca59cb53fe9cbc5155093605c7068220.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 47.1
+    },
+    {
+      "file": "unchecked_low_level_calls/0xec329ffc97d75fe03428ae155fc7793431487f63.sol",
+      "filename": "0xec329ffc97d75fe03428ae155fc7793431487f63.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 57.7
+    },
+    {
+      "file": "unchecked_low_level_calls/0xf2570186500a46986f3139f65afedc2afe4f445d.sol",
+      "filename": "0xf2570186500a46986f3139f65afedc2afe4f445d.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 52.1
+    },
+    {
+      "file": "unchecked_low_level_calls/0xf29ebe930a539a60279ace72c707cba851a57707.sol",
+      "filename": "0xf29ebe930a539a60279ace72c707cba851a57707.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 61.6
+    },
+    {
+      "file": "unchecked_low_level_calls/0xf70d589d76eebdd7c12cc5eec99f8f6fa4233b9e.sol",
+      "filename": "0xf70d589d76eebdd7c12cc5eec99f8f6fa4233b9e.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 50.1
+    },
+    {
+      "file": "unchecked_low_level_calls/etherpot_lotto.sol",
+      "filename": "etherpot_lotto.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101"
+        },
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 49.7
+    },
+    {
+      "file": "unchecked_low_level_calls/king_of_the_ether_throne.sol",
+      "filename": "king_of_the_ether_throne.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 56.3
+    },
+    {
+      "file": "unchecked_low_level_calls/lotto.sol",
+      "filename": "lotto.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 46.6
+    },
+    {
+      "file": "unchecked_low_level_calls/mishandled.sol",
+      "filename": "mishandled.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 35.7
+    },
+    {
+      "file": "unchecked_low_level_calls/unchecked_return_value.sol",
+      "filename": "unchecked_return_value.sol",
+      "expected_type": "Unchecked Return Value",
+      "expected_swc": "SWC-104",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Unchecked Return Value",
+          "swc_id": "SWC-104"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 36.0
+    }
+  ],
+  "errors": [
+    {
+      "file": "unchecked_low_level_calls/0x3a0e9acd953ffc0dd18d63603488846a6b8b2b01.sol",
+      "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=300)"
+    }
+  ]
+}

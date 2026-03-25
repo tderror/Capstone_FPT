@@ -1,0 +1,8 @@
+# Contract: EtherStore (SmartBugs)
+# Strategy: solc_ast_json
+# Chunks: 0
+# Parse success: False
+# ERROR: solc JSON parse error: Extra data: line 1366 column 1 (char 35609)
+
+============================================================
+

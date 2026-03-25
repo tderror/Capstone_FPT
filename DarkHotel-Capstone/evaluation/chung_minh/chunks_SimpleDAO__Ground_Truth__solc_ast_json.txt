@@ -1,0 +1,11 @@
+# Contract: SimpleDAO (Ground Truth)
+# Strategy: solc_ast_json
+# Chunks: 0
+# Parse success: False
+# ERROR: solc FAILED (returncode=1): F:\Capstone_FPT_dang_lam\DarkHotel-Capstone\evaluation\ground_truth\1_smartbugs_baseline\reentrancy\RE_001_simple_dao.sol:19:45: Error: Expected token LBrace got 'View'
+    function queryCredit(address to) public view returns (uint) {
+
+                                            ^
+
+============================================================
+

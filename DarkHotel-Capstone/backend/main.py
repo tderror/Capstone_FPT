@@ -15,6 +15,21 @@ from ast_parser import SolidityASTParser
 from smart_rag_system import SmartRAGSystem  # v6 - CodeRankEmbed + Qdrant + Reranker + CRAG
 from llm_analyzer import LLMAnalyzer
 
+def _infer_filter_type(code: str) -> str:
+    """Infer the most likely vulnerability type from Solidity code patterns.
+
+    Used to pass metadata filter to Qdrant, reducing noise in retrieval results.
+    Returns: "Reentrancy" | "UncheckedReturnValue" | None
+    """
+    # .call{value:} or .call.value() → classic reentrancy pattern
+    if re.search(r'\.call\{value:', code) or re.search(r'\.call\.value', code):
+        return "Reentrancy"
+    # .send() or bare .call() without value → unchecked return value
+    if re.search(r'\.send\(', code) or re.search(r'\.call\(', code):
+        return "UncheckedReturnValue"
+    return None
+
+
 app = FastAPI(
     title="DarkHotel Smart Contract Analyzer",
     version="6.0.0",
@@ -147,8 +162,11 @@ async def analyze_contract(file: UploadFile = File(...)):
             if risky_functions:
                 for func in risky_functions:
                     search_query = func['code']
+                    # Fix #5: Infer filter_type from code patterns to reduce noise
+                    filter_type = _infer_filter_type(func['code'])
+                    # Fix #8: Request 15 candidates per function (reranker needs larger pool)
                     func_results = await asyncio.to_thread(
-                        smart_rag.search_similar, search_query, 10, None
+                        smart_rag.search_similar, search_query, 15, filter_type
                     )
                     for r in func_results:
                         r['source_function'] = func['name']
@@ -157,7 +175,7 @@ async def analyze_contract(file: UploadFile = File(...)):
             else:
                 search_query = code_text[:3000]
                 rag_candidates = await asyncio.to_thread(
-                    smart_rag.search_similar, search_query, 10, None
+                    smart_rag.search_similar, search_query, 15, None
                 )
             return rag_candidates
 
@@ -177,16 +195,33 @@ async def analyze_contract(file: UploadFile = File(...)):
                 if match:
                     slither_hints.append(match.group(1))
 
+        # Map Slither detector names to human-readable vulnerability types
+        HINT_TO_VULN = {
+            "reentrancy-eth": "Reentrancy",
+            "reentrancy-no-eth": "Reentrancy",
+            "reentrancy-benign": "Reentrancy",
+            "reentrancy-events": "Reentrancy",
+            "unchecked-send": "Unchecked Return Value",
+            "unchecked-lowlevel": "Unchecked Return Value",
+            "unchecked-transfer": "Unchecked Return Value",
+        }
+        slither_vuln_types = list(set(
+            HINT_TO_VULN[h] for h in slither_hints if h in HINT_TO_VULN
+        ))
+
         print(f"   -> Slither: {len(slither_warnings)} warnings, hints: {slither_hints if slither_hints else 'none'}")
+        print(f"   -> Slither vuln types: {slither_vuln_types if slither_vuln_types else 'none'}")
         print(f"   -> RAG: searched {len(risky_functions) if risky_functions else 'full contract'}")
 
         # Deduplicate by (vulnerability_type, swc_id, source_function, audit_company)
+        # Fix #6: Relaxed from max 2 to max 3 per key — gives cross-encoder
+        # reranker a larger pool so it can pick the best candidates itself
         dedup_count = Counter()
         unique_candidates = []
         for r in rag_candidates:
             key = (r.get('vulnerability_type'), r.get('swc_id'), r.get('source_function'), r.get('audit_company', ''))
             dedup_count[key] += 1
-            if dedup_count[key] <= 2:
+            if dedup_count[key] <= 3:
                 unique_candidates.append(r)
 
         print(f"   -> Raw: {len(rag_candidates)}, Unique: {len(unique_candidates)}")
@@ -194,10 +229,46 @@ async def analyze_contract(file: UploadFile = File(...)):
         # === STEP 4: Cross-Encoder Reranking + CRAG Gate ===
         print("\n[STEP 4/6] Cross-encoder reranking + CRAG gate...")
 
+        # Build rerank query from risky functions.
+        # Fix #3: ms-marco cross-encoder is NL-trained — emphasize NL description
+        # over raw code. Include vulnerability context so cross-encoder can
+        # measure genuine relevance instead of being confused by Solidity syntax.
+        # Build Slither-enhanced context for reranking
+        slither_context = ""
+        if slither_vuln_types:
+            slither_context = f" Slither detected: {', '.join(slither_vuln_types)}."
+
+        if risky_functions:
+            rerank_parts = []
+            for func in risky_functions[:3]:  # Top 3 risky functions
+                indicators = ", ".join(func.get('risk_indicators', []))
+                inferred_type = _infer_filter_type(func.get('code', ''))
+                vuln_hint = f" Suspected: {inferred_type}." if inferred_type else ""
+                rerank_parts.append(
+                    f"Smart contract security vulnerability in Solidity function "
+                    f"{func['name']} of contract {func['contract']}. "
+                    f"Risk indicators: {indicators}.{vuln_hint}{slither_context} "
+                    f"This function involves external calls and state modifications "
+                    f"that may lead to reentrancy, unchecked return values, or "
+                    f"integer overflow exploits. "
+                    f"Code: {func['code'][:200]}"
+                )
+            rerank_query = " | ".join(rerank_parts)
+        else:
+            # Fallback: no risky functions detected by AST.
+            # Still build an NL query so cross-encoder can work properly.
+            inferred = _infer_filter_type(code_text)
+            vuln_hint = f" Suspected: {inferred}." if inferred else ""
+            rerank_query = (
+                f"Smart contract security audit of Solidity code.{vuln_hint}{slither_context} "
+                f"Checking for reentrancy, unchecked return values, and integer overflow vulnerabilities. "
+                f"Code: {code_text[:500]}"
+            )
+
         # 4a: Cross-encoder reranking (ms-marco-MiniLM-L-6-v2)
         reranked_results = await asyncio.to_thread(
             smart_rag.reranker.rerank,
-            code_text[:2000],
+            rerank_query[:2000],
             unique_candidates,
             5
         )
@@ -206,12 +277,14 @@ async def analyze_contract(file: UploadFile = File(...)):
         for i, r in enumerate(reranked_results):
             bi = r.get('bi_encoder_score', 0)
             ce = r.get('cross_encoder_score', 0)
-            print(f"      [{i+1}] {r.get('vulnerability_type', '?')} (bi={bi:.4f}, ce={ce:.4f}, combined={r.get('similarity', 0):.4f})")
+            combined = r.get('combined_score', 0)
+            print(f"      [{i+1}] {r.get('vulnerability_type', '?')} (bi={bi:.4f}, ce={ce:.4f}, combined={combined:.4f})")
 
         # 4b: CRAG evaluation (Corrective RAG)
         crag_action, gated_evidence = smart_rag.crag.evaluate(reranked_results)
-        top_ce = reranked_results[0].get('cross_encoder_score', 0) if reranked_results else 0
-        print(f"   -> CRAG gate: {crag_action} (top cross-encoder={top_ce:.4f})")
+        top_combined = reranked_results[0].get('combined_score', 0) if reranked_results else 0
+        top_bi = reranked_results[0].get('bi_encoder_score', 0) if reranked_results else 0
+        print(f"   -> CRAG gate: {crag_action} (top combined={top_combined:.4f}, top bi={top_bi:.4f})")
 
         if crag_action == "CORRECT":
             evidence_for_llm = gated_evidence
@@ -226,13 +299,15 @@ async def analyze_contract(file: UploadFile = File(...)):
         # === STEP 5: LLM Chain-of-Thought Reasoning ===
         print("\n[STEP 5/6] LLM Chain-of-Thought reasoning...")
 
+        # Fix #7: Pass CRAG action to LLM so prompt adapts evidence framing
         llm_result = await asyncio.to_thread(
             llm.analyze,
             code_text,
             slither_warnings,
             evidence_for_llm,  # Gated: top-5 or empty
             use_advanced_prompt=True,
-            solidity_version=ast_summary['solidity_version']
+            solidity_version=ast_summary['solidity_version'],
+            crag_action=crag_action
         )
 
         if not llm_result['success']:
@@ -275,7 +350,9 @@ async def analyze_contract(file: UploadFile = File(...)):
                         "type": case.get('vulnerability_type', 'Unknown'),
                         "swc_id": case.get('swc_id', 'N/A'),
                         "severity": case.get('severity', 'Unknown'),
-                        "similarity": case.get('similarity', 0),
+                        "bi_encoder_score": case.get('bi_encoder_score', case.get('similarity', 0)),
+                        "cross_encoder_score": case.get('cross_encoder_score', 0),
+                        "combined_score": case.get('combined_score', 0),
                         "function": case.get('function', 'N/A'),
                         "line_number": case.get('line_number', 'N/A'),
                         "audit_company": case.get('audit_company', 'N/A'),

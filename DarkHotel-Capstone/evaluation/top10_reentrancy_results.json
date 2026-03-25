@@ -1,0 +1,253 @@
+{
+  "evaluation": "Top 10 Reentrancy Contracts",
+  "timestamp": "2026-03-25T09:56:04.832341",
+  "dataset": "external_datasets/top_10_reentrancy",
+  "total_contracts": 10,
+  "metrics": {
+    "tp": 10,
+    "tn": 0,
+    "fp": 0,
+    "fn": 0,
+    "recall": 1.0,
+    "type_match_rate": 1.0
+  },
+  "results": [
+    {
+      "file": "01_CB_BANK.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107",
+          "severity": "Critical",
+          "location": "Collect() at line 43"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101",
+          "severity": "Low",
+          "location": "Put() at line 15"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 39.5
+    },
+    {
+      "file": "02_CA_BANK.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107",
+          "severity": "Critical",
+          "location": "Collect() at line 43"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 38.3
+    },
+    {
+      "file": "03_p_bank.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107",
+          "severity": "Critical",
+          "location": "Collect() at line 35"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 36.1
+    },
+    {
+      "file": "04_BoomerangLiquidity_POWH.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107",
+          "severity": "Critical",
+          "location": "payout() at line 177"
+        },
+        {
+          "type": "Unchecked Low-Level Call",
+          "swc_id": "SWC-104",
+          "severity": "Medium",
+          "location": "payout() at line 191"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101",
+          "severity": "Medium",
+          "location": "deposit() at line 160"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 66.3
+    },
+    {
+      "file": "05_BoomerangLiquidity_FLM.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107",
+          "severity": "Critical",
+          "location": "payout() at line 177"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104",
+          "severity": "High",
+          "location": "payout() at line 177"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101",
+          "severity": "High",
+          "location": "deposit() at line 152"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 52.4
+    },
+    {
+      "file": "06_IronHands.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107",
+          "severity": "Critical",
+          "location": "payout() at line 437 and 467"
+        },
+        {
+          "type": "Integer Overflow and Underflow",
+          "swc_id": "SWC-101",
+          "severity": "High",
+          "location": "Multiple locations, e.g., deposit() at line 379, 383"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104",
+          "severity": "High",
+          "location": "payout() at line 437 and withdraw() at line 575"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 75.0
+    },
+    {
+      "file": "07_X3ProfitMainFundTransfer.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107",
+          "severity": "Critical",
+          "location": "fallback() at line 65"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 66.3
+    },
+    {
+      "file": "08_SOLIDBLOCK.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107",
+          "severity": "High",
+          "location": "swapTokensForETH() at lines 1785-1791"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104",
+          "severity": "Medium",
+          "location": "rescueAnyERC20Tokens() at line 1987"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 72.3
+    },
+    {
+      "file": "09_TwelveHourAuction.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107",
+          "severity": "Critical",
+          "location": "sendProfitTTH() at line 755"
+        },
+        {
+          "type": "Integer Underflow",
+          "swc_id": "SWC-101",
+          "severity": "High",
+          "location": "updateGame() at line 711"
+        },
+        {
+          "type": "Unchecked Call Return Value",
+          "swc_id": "SWC-104",
+          "severity": "Medium",
+          "location": "buyTHT() at line 789"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 107.1
+    },
+    {
+      "file": "10_cb_BANK.sol",
+      "expected_type": "Reentrancy",
+      "expected_swc": "SWC-107",
+      "predicted_verdict": "VULNERABLE",
+      "predicted_types": [
+        {
+          "type": "Reentrancy",
+          "swc_id": "SWC-107",
+          "severity": "Critical",
+          "location": "Collect() at line 43"
+        },
+        {
+          "type": "Integer Overflow",
+          "swc_id": "SWC-101",
+          "severity": "Low",
+          "location": "Put() at line 20"
+        }
+      ],
+      "type_match": true,
+      "correct": true,
+      "time_seconds": 43.6
+    }
+  ],
+  "errors": []
+}

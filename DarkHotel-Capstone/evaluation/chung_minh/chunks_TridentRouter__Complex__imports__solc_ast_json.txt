@@ -1,0 +1,11 @@
+# Contract: TridentRouter (Complex, imports)
+# Strategy: solc_ast_json
+# Chunks: 0
+# Parse success: False
+# ERROR: solc FAILED (returncode=1): F:\Capstone_FPT_dang_lam\DarkHotel-Capstone\evaluation\ground_truth\vulnerable\reentrancy\RE_003_TridentRouter_c29.sol:25:39: Error: Expected token Semicolon got 'Identifier'
+    IBentoBoxMinimal public immutable bento;
+
+                                      ^
+
+============================================================
+

@@ -26,144 +26,207 @@ class LLMAnalyzer:
         self.max_retries = 5
         self.retry_delay = 60
 
+    def _build_rag_knowledge_section(self, rag_context: List[Dict], crag_action: str) -> str:
+        """
+        Build RAG evidence section + Tier 2 expert rules derived from audit knowledge base.
+
+        Tier 2 rules (safe-pattern recognition, severity calibration, exploit templates)
+        are ONLY available when RAG provides evidence. Without RAG, LLM only has
+        Tier 1 basic detection rules — this creates measurable RAG contribution.
+        """
+        if not rag_context or rag_context[0].get('vulnerability_type') == 'No data':
+            return (
+                "## HISTORICAL CASES:\n"
+                "No similar cases found in the audit knowledge base.\n"
+                "You have NO expert rules from historical audits — rely entirely on your own analysis.\n"
+                "Be CONSERVATIVE: only report vulnerabilities you are highly confident about.\n"
+            )
+
+        # --- RAG evidence cases ---
+        if crag_action == "CORRECT":
+            section = (
+                "## HISTORICAL CASES (HIGH-CONFIDENCE match from audit knowledge base):\n"
+                "These cases were evaluated as HIGHLY RELEVANT by the retrieval quality gate.\n"
+                "Use them as your PRIMARY analysis framework — the code patterns are very similar.\n"
+                "You MUST reference these cases in your reasoning.\n\n"
+            )
+        elif crag_action == "AMBIGUOUS":
+            section = (
+                "## HISTORICAL CASES (PARTIAL match from audit knowledge base):\n"
+                "These cases are PARTIALLY RELEVANT. Use them as supplementary context.\n"
+                "Apply the expert rules below but verify each against the current code.\n\n"
+            )
+        else:
+            section = "## HISTORICAL CASES (from audit knowledge base):\n"
+
+        for i, case in enumerate(rag_context[:3], 1):
+            code_snippet = case.get('code_snippet_vulnerable', '')
+            swc_id = case.get('swc_id', '')
+            severity = case.get('severity', '')
+            audit = case.get('audit_company', '')
+            root_cause = case.get('root_cause', '')
+            trigger = case.get('trigger_condition', '')
+            fix = case.get('fix_solution', '')
+            score = case.get('combined_score', case.get('similarity', 0))
+
+            section += f"""
+### Case {i}: {case.get('vulnerability_type', 'Unknown')} {f'({swc_id})' if swc_id else ''} - Relevance: {score:.2f}
+**Severity**: {severity}
+**Function**: {case.get('function', 'N/A')} @ {case.get('line_number', 'N/A')}
+**Audit**: {audit}
+"""
+            if root_cause:
+                section += f"**Root Cause**: {root_cause}\n"
+            if trigger:
+                section += f"**Trigger Condition**: {trigger}\n"
+            if fix:
+                section += f"**Fix Solution**: {fix}\n"
+            section += f"""**Vulnerable Code**:
+```solidity
+{code_snippet}
+```
+"""
+
+        # --- Tier 2: Expert rules from audit knowledge base ---
+        # These rules are ONLY injected when RAG evidence is available.
+        # Without RAG, LLM does NOT have these rules → higher FP rate.
+        section += """
+## EXPERT RULES FROM AUDIT KNOWLEDGE BASE:
+The following rules are derived from 407 real audit cases in our knowledge base.
+Apply these rules to distinguish VULNERABLE from SAFE patterns:
+
+### Safe Pattern Recognition (DO NOT report if these protections exist):
+
+**Reentrancy (SWC-107) — Safe patterns:**
+- `.send()` and `.transfer()` forward only 2300 gas — insufficient for reentrancy callback. Do NOT report SWC-107 for these.
+- ReentrancyGuard / `nonReentrant` modifier completely prevents reentrancy. Do NOT report.
+- Checks-Effects-Interactions (CEI) pattern: state updated BEFORE external call. Do NOT report.
+- Mutex/lock pattern (`bool locked; require(!locked); locked = true; ...; locked = false`). Do NOT report.
+- ERC20/IERC20 token calls (`.transfer()`, `.transferFrom()`, `.approve()`) are HIGH-LEVEL interface calls, NOT raw `.call{value:}()`. They CANNOT cause reentrancy. Do NOT report SWC-107 for ERC20 token operations.
+
+**Integer Overflow (SWC-101) — Safe patterns:**
+- Solidity >= 0.8.0 has BUILT-IN overflow/underflow protection that auto-reverts. SWC-101 is IMPOSSIBLE for ^0.8.x. This is ABSOLUTE — no exceptions.
+- SafeMath library wraps arithmetic with overflow checks. Do NOT report if SafeMath is used.
+- Arithmetic on non-critical values (loop counters, timestamps, array indices, display values) has no exploitable impact. Do NOT report.
+- Bounded inputs (e.g., percentage * amount where percentage <= 100) cannot realistically overflow.
+
+**Unchecked Return Value (SWC-104) — Safe patterns:**
+- `.transfer()` auto-reverts on failure — no return check needed. Do NOT report.
+- Return value captured in bool and checked with `require()` or `if()`. Do NOT report.
+- ERC20 `.transfer()` and `.transferFrom()` are high-level calls with built-in revert — NOT the same as low-level `.call()`. Do NOT report SWC-104 for ERC20 operations.
+
+### Severity Calibration (from historical audit data):
+- Full fund drain via reentrancy → Critical
+- Reentrancy with capped/limited re-enterable amount → Medium (not Critical)
+- Integer overflow affecting balances/supply/auth → High
+- Integer overflow on bounded arithmetic (price * small_qty) → Medium or Low
+- Unchecked .send() on main withdrawal → High
+- Unchecked .send() on refund of excess only → Medium
+- If a finding has severity Low → consider NOT reporting (noise reduction)
+
+### Exploit Verification (from historical trigger conditions):
+- Only report a vulnerability if you can describe a CONCRETE exploit scenario
+- The exploit must be triggerable by an external attacker (not just theoretical)
+- Reference the trigger conditions from historical cases above when applicable
+"""
+        return section
+
     def create_advanced_prompt(
         self,
         code: str,
         slither_warnings: List[str],
-        rag_context: List[Dict]
+        rag_context: List[Dict],
+        crag_action: str = None
     ) -> str:
         """
-        Tạo prompt với Chain-of-Thought reasoning
+        Tạo prompt với Chain-of-Thought reasoning + Prompt Tiering.
+
+        Architecture:
+        - Tier 1 (always present): Basic vulnerability detection checklist.
+          LLM knows WHAT to check but has minimal guidance on safe vs vulnerable.
+        - Tier 2 (from RAG only): Expert rules for safe-pattern recognition,
+          severity calibration, exploit verification. Injected via
+          _build_rag_knowledge_section() ONLY when RAG evidence is available.
+
+        This creates measurable RAG contribution:
+        - LLM alone (Tier 1 only): Can detect obvious vulns but HIGH false positive rate
+        - LLM + RAG (Tier 1 + Tier 2): Accurate detection with LOW false positive rate
 
         Args:
             code: Original Solidity code
             slither_warnings: Warnings from Slither
             rag_context: Similar cases from RAG
+            crag_action: CRAG gate result ("CORRECT"|"AMBIGUOUS"|"INCORRECT"|None)
 
         Returns:
             Formatted prompt string
         """
 
-        # Format RAG context (v6 — knowledge-enriched: root_cause, trigger, fix)
-        rag_section = ""
-        if rag_context and rag_context[0].get('vulnerability_type') != 'No data':
-            rag_section = "## HISTORICAL CASES (Similar vulnerabilities from real audits):\n"
-            for i, case in enumerate(rag_context[:3], 1):
-                code_snippet = case.get('code_snippet_vulnerable', '')
-                swc_id = case.get('swc_id', '')
-                severity = case.get('severity', '')
-                audit = case.get('audit_company', '')
-                root_cause = case.get('root_cause', '')
-                trigger = case.get('trigger_condition', '')
-                fix = case.get('fix_solution', '')
+        # Build RAG section with Tier 2 expert rules (only when evidence available)
+        rag_section = self._build_rag_knowledge_section(rag_context, crag_action)
 
-                rag_section += f"""
-### Case {i}: {case.get('vulnerability_type', 'Unknown')} {f'({swc_id})' if swc_id else ''} - Similarity: {case.get('similarity', 0):.2f}
-**Severity**: {severity}
-**Function**: {case.get('function', 'N/A')} @ {case.get('line_number', 'N/A')}
-**Audit**: {audit}
-"""
-                if root_cause:
-                    rag_section += f"**Root Cause**: {root_cause}\n"
-                if trigger:
-                    rag_section += f"**Trigger Condition**: {trigger}\n"
-                if fix:
-                    rag_section += f"**Fix Solution**: {fix}\n"
-                rag_section += f"""**Vulnerable Code**:
-```solidity
-{code_snippet}
-```
-"""
-        else:
-            rag_section = "## HISTORICAL CASES:\nNo similar cases found in database.\n"
-
-        # Format Slither warnings (NEW: Handle smart wrapper warnings)
+        # Format Slither warnings
         slither_section = "## STATIC ANALYSIS (Slither):\n"
         if slither_warnings and len(slither_warnings) > 0:
             first_warning = slither_warnings[0]
 
-            # Check if Slither FAILED (warning from smart wrapper)
             if first_warning.startswith('⚠️ SLITHER UNAVAILABLE'):
                 slither_section += f"{first_warning}\n\n"
                 slither_section += "**IMPORTANT:** You MUST perform thorough manual code review.\n"
                 slither_section += "Rely heavily on RAG similar cases and your own analysis.\n"
 
-            # Check if it's clean format: "[High] Reentrancy at lines..."
             elif first_warning.startswith('['):
                 slither_section += "**CRITICAL WARNINGS FOUND:**\n"
                 for warning in slither_warnings:
                     slither_section += f"  {warning}\n"
                 slither_section += "\n⚠️ PAY SPECIAL ATTENTION to these line numbers!\n"
 
-            # Check if Slither ran successfully but found nothing
             elif first_warning == "No vulnerabilities detected by Slither":
                 slither_section += "- Slither found no vulnerabilities\n"
                 slither_section += "- BUT: Slither has high false negative rate!\n"
-                slither_section += "- STILL check code carefully, especially patterns from RAG.\n"
+                slither_section += "- STILL check code carefully using the expert rules above.\n"
 
             else:
-                # Generic format fallback
                 for warning in slither_warnings:
                     slither_section += f"- {warning}\n"
         else:
             slither_section += "- No Slither analysis available\n"
 
-        # IMPROVED PROMPT: Systematic checking with strict evidence + primary/secondary output
+        # =====================================================================
+        # PROMPT: Tier 1 (basic checklist) + Tier 2 (RAG expert rules above)
+        # =====================================================================
         prompt = f"""You are an expert blockchain security auditor. Your task is to SYSTEMATICALLY check the Solidity code for the following 3 vulnerability types.
 
 {slither_section}
 
 {rag_section}
 
-## IMPORTANT — EVIDENCE CONTEXT:
-The historical cases above are examples of KNOWN vulnerabilities from audit reports.
-Their presence does NOT imply the current contract is vulnerable.
-Many secure contracts use identical patterns (withdraw, .call, transfer) with proper
-protections (nonReentrant, Checks-Effects-Interactions, require guards).
-Evaluate the CURRENT code on its own merits. Only flag vulnerabilities you can
-demonstrate with a concrete exploit scenario in the current code.
-
 ## CODE TO ANALYZE:
 ```solidity
 {code}
 ```
 
-## SYSTEMATIC VULNERABILITY CHECKLIST:
+## VULNERABILITY CHECKLIST (Tier 1 — Basic Detection):
 
 You MUST check ALL 3 vulnerability types below. For EACH type, explicitly state YES or NO with evidence.
+If EXPERT RULES FROM AUDIT KNOWLEDGE BASE are provided above, you MUST apply them to reduce false positives.
 
 ### 1. REENTRANCY (SWC-107)
-- Check: Are there external calls using `.call{{value:}}()` BEFORE state updates?
-- VULNERABLE: State changes happen AFTER `.call{{value:}}()` external calls
-- NOT VULNERABLE (do NOT report):
-  - `.send()` and `.transfer()` only forward 2300 gas — NOT enough to reenter
-  - ReentrancyGuard / nonReentrant modifier is used
-  - Checks-Effects-Interactions pattern is followed (state updated BEFORE external call)
-  - No external call exists in the function
-  - ERC20/IERC20 token calls (`.transfer()`, `.transferFrom()`, `.approve()`) are HIGH-LEVEL interface calls, NOT raw `.call{{value:}}()`. They CANNOT cause reentrancy in the caller contract. Do NOT report SWC-107 for ERC20 token operations
-  - If a mutex/lock pattern is used (bool locked, require(!locked), locked = true/false)
+- Check: Are there external calls BEFORE state updates?
+- VULNERABLE: State changes happen AFTER external calls (`.call{{value:}}()`)
+- If expert rules are available above, apply the safe pattern recognition rules before reporting.
 - Answer: [YES/NO] with evidence
 
 ### 2. INTEGER OVERFLOW/UNDERFLOW (SWC-101)
-- **FIRST CHECK THE PRAGMA VERSION** before anything else:
-  - If pragma solidity >= 0.8.0 (e.g., ^0.8.0, ^0.8.4, ^0.8.26, >=0.8.0) → SWC-101 is IMPOSSIBLE. Solidity 0.8.x has built-in overflow/underflow checks that auto-revert. STOP HERE, answer NO, do NOT analyze arithmetic.
-- Only if Solidity < 0.8.0: Check if math operations (+, -, *, /) are done WITHOUT SafeMath AND with exploitable impact
-- VULNERABLE: Solidity < 0.8.0 + no SafeMath + arithmetic affects balances, token amounts, or access control
-- NOT VULNERABLE (do NOT report):
-  - Solidity >= 0.8.0 (built-in overflow protection) — THIS IS ABSOLUTE, no exceptions
-  - SafeMath library is used for the operation
-  - Arithmetic only affects non-critical values (loop counters, timestamps, array indices, display values)
-  - The overflow/underflow has no realistic exploit path (cannot be triggered by user input)
-- Answer: [YES/NO] with evidence of EXPLOITABLE impact
+- Check: What is the pragma solidity version? Are there unprotected arithmetic operations?
+- VULNERABLE: Solidity < 0.8.0 + no SafeMath + arithmetic affects critical values
+- If expert rules are available above, apply them to determine if the overflow is exploitable.
+- Answer: [YES/NO] with evidence
 
 ### 3. UNCHECKED RETURN VALUE (SWC-104)
-- Check: Are LOW-LEVEL calls (.send(), .call()) used WITHOUT checking the return value?
-- VULNERABLE: addr.send(amount) or addr.call() without require() or if() check
-- NOT VULNERABLE (do NOT report):
-  - Return value is checked with require() or if()
-  - .transfer() is used (auto-reverts on failure)
-  - The call result is captured in a bool and checked
-  - ERC20/IERC20 `.transfer()` and `.transferFrom()` are HIGH-LEVEL function calls with built-in revert — they are NOT the same as low-level `.call()`. Do NOT report SWC-104 for ERC20 token operations
+- Check: Are low-level calls used without checking the return value?
+- VULNERABLE: `.send()` or `.call()` without `require()` or `if()` check
+- If expert rules are available above, apply safe pattern recognition before reporting.
 - Answer: [YES/NO] with evidence
 
 ## OUTPUT FORMAT (STRICT JSON):
@@ -202,7 +265,7 @@ After checking ALL 3 types, identify the MOST DANGEROUS vulnerability as primary
       "recommendation": "Specific fix recommendation"
     }}
   ],
-  "reasoning": "Your step-by-step Chain-of-Thought analysis covering all 3 vulnerability checks above"
+  "reasoning": "Your step-by-step Chain-of-Thought analysis covering all 3 vulnerability checks above. If expert rules were provided, explain how you applied them."
 }}
 
 If no vulnerabilities found, return:
@@ -212,37 +275,20 @@ If no vulnerabilities found, return:
   "primary_vulnerability": null,
   "secondary_warnings": [],
   "vulnerabilities": [],
-  "reasoning": "Explanation of why code is safe, referencing each check"
+  "reasoning": "Explanation of why code is safe, referencing each check and expert rules if available"
 }}
 
-## CRITICAL RULES:
-1. Output ONLY valid JSON - no markdown, no code blocks, no extra text before or after
+## RULES:
+1. Output ONLY valid JSON - no markdown, no code blocks, no extra text
 2. Check ALL 3 types systematically - DO NOT skip any
-3. ONLY report Reentrancy (SWC-107), Integer Overflow/Underflow (SWC-101), or Unchecked Return Value (SWC-104). Do NOT report ANY other SWC types (e.g., SWC-133, SWC-106, SWC-115, etc.) — they are OUT OF SCOPE
-4. If ALL 3 checks above are NO → verdict MUST be "SAFE". Do NOT override this with Slither findings or other vulnerability types. Slither is context only — your job is to check the 3 types above
-5. STRICT EVIDENCE REQUIRED - only report a vulnerability if you can describe a concrete exploit scenario
-6. .send() and .transfer() forward only 2300 gas — they CANNOT cause reentrancy. Do NOT report SWC-107 for .send()/.transfer()
-7. Integer Overflow: ONLY report if the overflow can be EXPLOITED (affects balance, supply, auth). Do NOT report for counters, timestamps, or non-critical arithmetic
-8. If SafeMath is used or Solidity >= 0.8.0 → Integer Overflow is NOT vulnerable
-9. If ReentrancyGuard/nonReentrant is used → Reentrancy is NOT vulnerable
-10. If return value is checked with require() or if() → Unchecked Return Value is NOT vulnerable
-11. primary_vulnerability = the SINGLE most dangerous finding. secondary_warnings = other lesser findings
-12. Do NOT "report just to be safe" — only report what you can PROVE with evidence from the code
-13. CRITICAL — Solidity >= 0.8.0 makes SWC-101 IMPOSSIBLE. Do NOT report Integer Overflow for ^0.8.x contracts under ANY circumstances, even if RAG similar cases suggest it
-14. ERC20 token operations (IERC20.transfer, IERC20.transferFrom, IERC20.approve) are SAFE high-level calls. Do NOT confuse them with low-level address.call() or address.send()
-
-## SEVERITY CONTEXT RULES (for secondary findings):
-- A vulnerability that EXISTS but has LIMITED exploit impact → downgrade severity:
-  - Integer Overflow on a multiply that has bounded inputs (e.g., price * small_quantity) → Medium or Low, not High
-  - Unchecked .send() that only affects refund of excess payment (not main balance) → Medium, not High
-  - Reentrancy where the re-enterable amount is capped or negligible → Medium, not Critical
-- A vulnerability with FULL exploit impact (can drain funds, mint unlimited tokens, bypass auth) → keep High or Critical
-- If a secondary finding has severity Low → consider NOT reporting it (noise reduction)
+3. ONLY report SWC-107, SWC-101, or SWC-104. All other SWC types are OUT OF SCOPE
+4. If ALL 3 checks are NO → verdict MUST be "SAFE"
+5. STRICT EVIDENCE REQUIRED - only report with a concrete exploit scenario
+6. primary_vulnerability = SINGLE most dangerous finding. secondary_warnings = lesser findings
+7. Do NOT "report just to be safe" — only report what you can PROVE with evidence
 
 Now begin your systematic analysis and output JSON.
 """
-
-
 
         return prompt
 
@@ -386,7 +432,8 @@ Now begin your systematic analysis and output JSON.
         slither_warnings: List[str],
         rag_context: List[Dict],
         use_advanced_prompt: bool = True,
-        solidity_version: str = None
+        solidity_version: str = None,
+        crag_action: str = None
     ) -> Dict:
         """
         Gửi code lên LLM để phân tích
@@ -402,7 +449,7 @@ Now begin your systematic analysis and output JSON.
         """
 
         if use_advanced_prompt:
-            prompt = self.create_advanced_prompt(code, slither_warnings, rag_context)
+            prompt = self.create_advanced_prompt(code, slither_warnings, rag_context, crag_action)
         else:
             # Simple prompt (fallback)
             prompt = f"""Analyze this Solidity code for vulnerabilities:

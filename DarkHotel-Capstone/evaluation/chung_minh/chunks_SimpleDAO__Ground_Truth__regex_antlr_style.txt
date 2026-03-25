@@ -1,0 +1,32 @@
+# Contract: SimpleDAO (Ground Truth)
+# Strategy: regex_antlr_style
+# Chunks: 3
+# Parse success: True
+
+============================================================
+
+--- Chunk 0: function donate ---
+--- Lines 6-9 (4 lines, 88 chars) ---
+
+    function donate(address to) public payable {
+        credit[to] += msg.value;
+    }
+
+--- Chunk 1: function withdraw ★ CONTAINS VULNERABILITY ★ ---
+--- Lines 10-17 (8 lines, 261 chars) ---
+
+    function withdraw(uint amount) public {
+        if (credit[msg.sender] >= amount) {
+            // VULNERABLE: External call before state update
+            require(msg.sender.call.value(amount)());
+            credit[msg.sender] -= amount;
+        }
+    }
+
+--- Chunk 2: function queryCredit ---
+--- Lines 18-21 (4 lines, 99 chars) ---
+
+    function queryCredit(address to) public view returns (uint) {
+        return credit[to];
+    }
+

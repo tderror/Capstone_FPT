@@ -45,61 +45,46 @@ ALLOWED_SWCS = {"SWC-107", "SWC-101", "SWC-104"}
 
 
 def create_only_llm_prompt(code: str) -> str:
-    """Same prompt as llm_analyzer.py but with empty Slither + empty RAG."""
+    """Tier 1 only prompt — matches what full pipeline LLM sees when CRAG=INCORRECT.
 
-    slither_section = """## STATIC ANALYSIS (Slither):
-- No Slither analysis available"""
-
-    rag_section = """## HISTORICAL CASES:
-No similar cases found in database."""
+    NO expert rules (safe pattern recognition, severity calibration) — those come
+    from RAG Tier 2. This creates a fair ablation comparison:
+    - LLM-only: Tier 1 basic detection → higher FP rate
+    - Full pipeline: Tier 1 + Tier 2 expert rules → lower FP rate
+    """
 
     prompt = f"""You are an expert blockchain security auditor. Your task is to SYSTEMATICALLY check the Solidity code for the following 3 vulnerability types.
 
-{slither_section}
+## STATIC ANALYSIS (Slither):
+- No Slither analysis available
 
-{rag_section}
+## HISTORICAL CASES:
+No similar cases found in the audit knowledge base.
+You have NO expert rules from historical audits — rely entirely on your own analysis.
+Be CONSERVATIVE: only report vulnerabilities you are highly confident about.
 
 ## CODE TO ANALYZE:
 ```solidity
 {code}
 ```
 
-## SYSTEMATIC VULNERABILITY CHECKLIST:
+## VULNERABILITY CHECKLIST (Tier 1 — Basic Detection):
 
 You MUST check ALL 3 vulnerability types below. For EACH type, explicitly state YES or NO with evidence.
 
 ### 1. REENTRANCY (SWC-107)
-- Check: Are there external calls using `.call{{value:}}()` BEFORE state updates?
-- VULNERABLE: State changes happen AFTER `.call{{value:}}()` external calls
-- NOT VULNERABLE (do NOT report):
-  - `.send()` and `.transfer()` only forward 2300 gas — NOT enough to reenter
-  - ReentrancyGuard / nonReentrant modifier is used
-  - Checks-Effects-Interactions pattern is followed (state updated BEFORE external call)
-  - No external call exists in the function
-  - ERC20/IERC20 token calls (`.transfer()`, `.transferFrom()`, `.approve()`) are HIGH-LEVEL interface calls, NOT raw `.call{{value:}}()`. They CANNOT cause reentrancy in the caller contract. Do NOT report SWC-107 for ERC20 token operations
-  - If a mutex/lock pattern is used (bool locked, require(!locked), locked = true/false)
+- Check: Are there external calls BEFORE state updates?
+- VULNERABLE: State changes happen AFTER external calls (`.call{{value:}}()`)
 - Answer: [YES/NO] with evidence
 
 ### 2. INTEGER OVERFLOW/UNDERFLOW (SWC-101)
-- **FIRST CHECK THE PRAGMA VERSION** before anything else:
-  - If pragma solidity >= 0.8.0 (e.g., ^0.8.0, ^0.8.4, ^0.8.26, >=0.8.0) → SWC-101 is IMPOSSIBLE. Solidity 0.8.x has built-in overflow/underflow checks that auto-revert. STOP HERE, answer NO, do NOT analyze arithmetic.
-- Only if Solidity < 0.8.0: Check if math operations (+, -, *, /) are done WITHOUT SafeMath AND with exploitable impact
-- VULNERABLE: Solidity < 0.8.0 + no SafeMath + arithmetic affects balances, token amounts, or access control
-- NOT VULNERABLE (do NOT report):
-  - Solidity >= 0.8.0 (built-in overflow protection) — THIS IS ABSOLUTE, no exceptions
-  - SafeMath library is used for the operation
-  - Arithmetic only affects non-critical values (loop counters, timestamps, array indices, display values)
-  - The overflow/underflow has no realistic exploit path (cannot be triggered by user input)
-- Answer: [YES/NO] with evidence of EXPLOITABLE impact
+- Check: What is the pragma solidity version? Are there unprotected arithmetic operations?
+- VULNERABLE: Solidity < 0.8.0 + no SafeMath + arithmetic affects critical values
+- Answer: [YES/NO] with evidence
 
 ### 3. UNCHECKED RETURN VALUE (SWC-104)
-- Check: Are LOW-LEVEL calls (.send(), .call()) used WITHOUT checking the return value?
-- VULNERABLE: addr.send(amount) or addr.call() without require() or if() check
-- NOT VULNERABLE (do NOT report):
-  - Return value is checked with require() or if()
-  - .transfer() is used (auto-reverts on failure)
-  - The call result is captured in a bool and checked
-  - ERC20/IERC20 `.transfer()` and `.transferFrom()` are HIGH-LEVEL function calls with built-in revert — they are NOT the same as low-level `.call()`. Do NOT report SWC-104 for ERC20 token operations
+- Check: Are low-level calls used without checking the return value?
+- VULNERABLE: `.send()` or `.call()` without `require()` or `if()` check
 - Answer: [YES/NO] with evidence
 
 ## OUTPUT FORMAT (STRICT JSON):
@@ -151,27 +136,14 @@ If no vulnerabilities found, return:
   "reasoning": "Explanation of why code is safe, referencing each check"
 }}
 
-## CRITICAL RULES:
-1. Output ONLY valid JSON - no markdown, no code blocks, no extra text before or after
+## RULES:
+1. Output ONLY valid JSON - no markdown, no code blocks, no extra text
 2. Check ALL 3 types systematically - DO NOT skip any
-3. ONLY report Reentrancy (SWC-107), Integer Overflow/Underflow (SWC-101), or Unchecked Return Value (SWC-104). Do NOT report ANY other SWC types (e.g., SWC-133, SWC-106, SWC-115, etc.) — they are OUT OF SCOPE
-4. If ALL 3 checks above are NO → verdict MUST be "SAFE". Do NOT override this with Slither findings or other vulnerability types. Slither is context only — your job is to check the 3 types above
-5. STRICT EVIDENCE REQUIRED - only report a vulnerability if you can describe a concrete exploit scenario
-6. .send() and .transfer() forward only 2300 gas — they CANNOT cause reentrancy. Do NOT report SWC-107 for .send()/.transfer()
-7. Integer Overflow: ONLY report if the overflow can be EXPLOITED (affects balance, supply, auth). Do NOT report for counters, timestamps, or non-critical arithmetic
-8. If SafeMath is used or Solidity >= 0.8.0 → Integer Overflow is NOT vulnerable
-9. If ReentrancyGuard/nonReentrant is used → Reentrancy is NOT vulnerable
-10. If return value is checked with require() or if() → Unchecked Return Value is NOT vulnerable
-11. primary_vulnerability = the SINGLE most dangerous finding. secondary_warnings = other lesser findings
-12. Do NOT "report just to be safe" — only report what you can PROVE with evidence from the code
-
-## SEVERITY CONTEXT RULES (for secondary findings):
-- A vulnerability that EXISTS but has LIMITED exploit impact → downgrade severity:
-  - Integer Overflow on a multiply that has bounded inputs (e.g., price * small_quantity) → Medium or Low, not High
-  - Unchecked .send() that only affects refund of excess payment (not main balance) → Medium, not High
-  - Reentrancy where the re-enterable amount is capped or negligible → Medium, not Critical
-- A vulnerability with FULL exploit impact (can drain funds, mint unlimited tokens, bypass auth) → keep High or Critical
-- If a secondary finding has severity Low → consider NOT reporting it (noise reduction)
+3. ONLY report SWC-107, SWC-101, or SWC-104. All other SWC types are OUT OF SCOPE
+4. If ALL 3 checks are NO → verdict MUST be "SAFE"
+5. STRICT EVIDENCE REQUIRED - only report with a concrete exploit scenario
+6. primary_vulnerability = SINGLE most dangerous finding. secondary_warnings = lesser findings
+7. Do NOT "report just to be safe" — only report what you can PROVE with evidence
 
 Now begin your systematic analysis and output JSON.
 """

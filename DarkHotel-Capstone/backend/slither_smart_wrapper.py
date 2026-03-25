@@ -95,6 +95,18 @@ SOLC_LOCK = FileLock(os.path.join(tempfile.gettempdir(), "darkhotel_solc.lock"))
 # Detect if running on Windows
 IS_WINDOWS = platform.system() == "Windows"
 
+# Only run detectors relevant to our 3 target SWC types:
+# SWC-107 (Reentrancy), SWC-101 (Integer Overflow), SWC-104 (Unchecked Return Value)
+SLITHER_DETECTORS = ",".join([
+    "reentrancy-eth",
+    "reentrancy-no-eth",
+    "reentrancy-benign",
+    "reentrancy-events",
+    "unchecked-send",
+    "unchecked-lowlevel",
+    "unchecked-transfer",
+])
+
 class SmartSlitherWrapper:
     """
     Intelligent Slither wrapper that:
@@ -194,66 +206,103 @@ class SmartSlitherWrapper:
         except:
             return False
 
+    # Mapping of 2-part versions to known stable patch versions
+    _VERSION_FALLBACK = {
+        "0.4": "0.4.26",
+        "0.5": "0.5.17",
+        "0.6": "0.6.12",
+        "0.7": "0.7.6",
+        "0.8": "0.8.28"
+    }
+
     def _extract_solidity_version(self, code: str) -> str:
         """
         Extract Solidity version from pragma.
-        Uses exact version from pragma if 3-part (e.g. 0.8.20).
+        Handles: ^0.8.20, >=0.6.0 <0.8.0, ~0.8, 0.8.19 || 0.8.20
+        For range pragmas (>=X <Y), picks the highest compatible version.
         Falls back to known latest patch for 2-part (e.g. 0.8).
-        Auto-installs via _ensure_solc_version if not available.
         """
-        pragma_match = re.search(r'pragma\s+solidity\s+[\^~>=]*([\d.]+)', code)
-        if pragma_match:
-            version = pragma_match.group(1)
-            parts = version.split('.')
+        # Find all pragma statements
+        pragma_match = re.search(r'pragma\s+solidity\s+([^;]+)', code)
+        if not pragma_match:
+            return None
 
-            # If full 3-part version (0.8.20), use it directly
-            if len(parts) == 3:
-                return version
+        pragma_str = pragma_match.group(1).strip()
 
-            # If 2-part (0.8), map to a known stable version
-            if len(parts) == 2:
-                major_minor = f"{parts[0]}.{parts[1]}"
-                fallback_map = {
-                    "0.4": "0.4.26",
-                    "0.5": "0.5.17",
-                    "0.6": "0.6.12",
-                    "0.7": "0.7.6",
-                    "0.8": "0.8.34"
-                }
-                return fallback_map.get(major_minor, "0.8.34")
+        # Extract ALL version numbers from the pragma
+        all_versions = re.findall(r'(\d+\.\d+\.\d+)', pragma_str)
+
+        if all_versions:
+            # For range pragmas like ">=0.6.0 <0.8.0", check for upper bound
+            # If there's a < constraint, pick the lower bound version
+            upper_match = re.search(r'<\s*(\d+\.\d+\.\d+)', pragma_str)
+            lower_match = re.search(r'[>=^~]*\s*(\d+\.\d+\.\d+)', pragma_str)
+
+            if upper_match and lower_match:
+                # Range pragma: use the lower bound (guaranteed compatible)
+                return lower_match.group(1)
+
+            # For ^0.8.20 or =0.8.20 or just 0.8.20: use first version
+            return all_versions[0]
+
+        # Try 2-part version: ^0.8, ~0.8, >=0.8
+        two_part = re.search(r'(\d+\.\d+)', pragma_str)
+        if two_part:
+            major_minor = two_part.group(1)
+            return self._VERSION_FALLBACK.get(major_minor, "0.8.28")
 
         return None
 
     def _has_external_imports(self, code: str) -> bool:
         """Check if code has external imports that would cause compilation failure"""
         # Match imports like @openzeppelin, hardhat, etc.
-        external_import = re.search(r'import\s+["\']@\w+', code)
-        return external_import is not None
+        # Handles both: import "@oz/..." and import {X} from "@oz/..."
+        return bool(re.search(r'import\s+["\']@\w+', code) or
+                     re.search(r'from\s+["\']@\w+', code))
+
+    # Known OpenZeppelin / common parent contract names for constructor stripping
+    _OZ_CONTRACTS = [
+        "Ownable", "Ownable2Step",
+        "ReentrancyGuard",
+        "ERC20", "ERC721", "ERC1155", "ERC4626",
+        "ERC20Permit", "ERC20Votes", "ERC20Burnable",
+        "AccessControl", "AccessControlEnumerable",
+        "Pausable",
+        "Initializable", "UUPSUpgradeable", "TransparentUpgradeableProxy",
+        "ERC20Upgradeable", "ERC721Upgradeable",
+        "Context",
+    ]
+
+    # Known modifiers from external contracts
+    _OZ_MODIFIERS = [
+        "nonReentrant", "onlyOwner", "whenNotPaused", "whenPaused",
+        "onlyRole", "initializer", "reinitializer", "onlyProxy",
+    ]
 
     def _strip_imports_and_inheritance(self, code: str) -> str:
         """
         Remove external imports and inheritance to allow basic Slither analysis.
         This is a fallback when full compilation fails.
         """
-        # Remove import lines
+        # Remove import lines (both single-line and multi-line {X, Y} from "...")
+        code = re.sub(r'import\s+\{[^}]*\}\s+from\s+["\'][^"\']+["\'];?\s*\n?', '', code)
         code = re.sub(r'import\s+["\'][^"\']+["\'];?\s*\n?', '', code)
 
         # Remove inheritance (is X, Y, Z) but keep contract name
         code = re.sub(r'(contract\s+\w+)\s+is\s+[^{]+', r'\1 ', code)
 
-        # Remove modifier calls that reference removed contracts
-        code = re.sub(r'\bnonReentrant\b', '', code)
-        code = re.sub(r'\bonlyOwner\b', '', code)
+        # Remove known modifier calls that reference removed contracts
+        for mod in self._OZ_MODIFIERS:
+            code = re.sub(rf'\b{mod}\b', '', code)
 
-        # Remove parent constructor calls like Ownable(msg.sender)
-        code = re.sub(r'\bOwnable\s*\([^)]*\)', '', code)
-        code = re.sub(r'\bReentrancyGuard\s*\([^)]*\)', '', code)
-        code = re.sub(r'\bERC20\s*\([^)]*\)', '', code)
-        code = re.sub(r'\bERC721\s*\([^)]*\)', '', code)
+        # Remove parent constructor calls: ContractName(args)
+        # Generic pattern for known OZ contracts
+        for name in self._OZ_CONTRACTS:
+            code = re.sub(rf'\b{name}\s*\([^)]*\)', '', code)
 
-        # Clean up empty constructor if only had parent calls
-        # constructor() Ownable(msg.sender) {} -> constructor() {}
-        code = re.sub(r'constructor\s*\(\s*\)\s*\{\s*\}', 'constructor() {}', code)
+        # Clean up dangling commas in constructor inheritance list
+        # constructor() , , {} -> constructor() {}
+        code = re.sub(r'constructor\s*\([^)]*\)\s*(?:\s*,\s*)+\s*\{', lambda m: m.group(0).split('{')[0].rstrip(' ,') + ' {', code)
 
         return code
 
@@ -287,7 +336,7 @@ class SmartSlitherWrapper:
         has_imports = self._has_external_imports(contract_code)
         code_to_analyze = contract_code
 
-        # [v3.1] Detect protections from ORIGINAL code BEFORE stripping
+        # [v3.3] Detect protections from ORIGINAL code BEFORE stripping
         # These modifiers get removed for compilation but LLM needs to know they exist
         stripped_protections = []
         if has_imports:
@@ -295,6 +344,14 @@ class SmartSlitherWrapper:
                 stripped_protections.append("ReentrancyGuard/nonReentrant")
             if re.search(r'\bonlyOwner\b|Ownable', contract_code):
                 stripped_protections.append("onlyOwner/Ownable")
+            if re.search(r'\bwhenNotPaused\b|Pausable', contract_code):
+                stripped_protections.append("Pausable/whenNotPaused")
+            if re.search(r'\binitializer\b|Initializable', contract_code):
+                stripped_protections.append("Initializable/initializer")
+            if re.search(r'\bAccessControl\b|hasRole\b|onlyRole\b', contract_code):
+                stripped_protections.append("AccessControl/hasRole")
+            if re.search(r'\bSafeMath\b|using SafeMath', contract_code):
+                stripped_protections.append("SafeMath")
             code_to_analyze = self._strip_imports_and_inheritance(contract_code)
 
         try:
@@ -302,21 +359,32 @@ class SmartSlitherWrapper:
             with open(temp_path, 'w', encoding='utf-8') as f:
                 f.write(code_to_analyze)
 
-            # [v3] Use lock for solc-select to prevent concurrent version switching
-            with SOLC_LOCK:
-                slither_ran = False
-                slither_error = None
+            # [v3.3] Lock ONLY for solc-select use (not the full Slither run)
+            # This allows concurrent Slither analyses once the compiler is set
+            slither_ran = False
+            slither_error = None
 
-                if detected_version and self.has_solc_select:
-                    # Check/install version (fast if already installed)
-                    if self._ensure_solc_version(detected_version):
-                        # Build shell command that switches version then runs Slither
-                        if IS_WINDOWS:
-                            # Windows: use && for command chaining in cmd.exe
-                            cmd = f'solc-select use {detected_version} && slither "{temp_path}" --json "{json_output_path}"'
-                        else:
-                            cmd = f'solc-select use {detected_version} && slither "{temp_path}" --json "{json_output_path}"'
+            if detected_version and self.has_solc_select:
+                # Check/install version (fast if already installed)
+                if self._ensure_solc_version(detected_version):
+                    # Lock only the solc-select use command (version switching)
+                    with SOLC_LOCK:
+                        try:
+                            subprocess.run(
+                                f'solc-select use {detected_version}',
+                                shell=True,
+                                capture_output=True,
+                                text=True,
+                                encoding='utf-8',
+                                errors='replace',
+                                timeout=30
+                            )
+                        except Exception as e:
+                            slither_error = f"solc-select use failed: {e}"
 
+                    # Run Slither OUTSIDE the lock (allows concurrent analysis)
+                    if not slither_error:
+                        cmd = f'slither "{temp_path}" --json "{json_output_path}" --detect {SLITHER_DETECTORS}'
                         try:
                             result = subprocess.run(
                                 cmd,
@@ -325,38 +393,44 @@ class SmartSlitherWrapper:
                                 text=True,
                                 encoding='utf-8',
                                 errors='replace',
-                                timeout=90  # Increased timeout for Windows
+                                timeout=90
                             )
                             slither_ran = True
                         except Exception as e:
                             slither_error = str(e)
-                    else:
-                        slither_error = f"Failed to install solc {detected_version}"
+                else:
+                    slither_error = f"Failed to install solc {detected_version}"
 
-                # Fallback: Try running Slither without solc-select
-                if not slither_ran:
-                    cmd = f'slither "{temp_path}" --json "{json_output_path}"'
-                    try:
-                        result = subprocess.run(
-                            cmd,
-                            shell=True,
-                            capture_output=True,
-                            text=True,
-                            encoding='utf-8',
-                            errors='replace',
-                            timeout=90
-                        )
-                        slither_ran = True
-                    except subprocess.TimeoutExpired:
-                        return self._create_warning_response(
-                            detected_version,
-                            reason="Slither timed out (>90s)"
-                        )
-                    except Exception as e:
-                        return self._create_warning_response(
-                            detected_version,
-                            reason=f"Slither execution failed: {str(e)}"
-                        )
+            # Fallback: Try running Slither without solc-select
+            if not slither_ran and not slither_error:
+                cmd = f'slither "{temp_path}" --json "{json_output_path}" --detect {SLITHER_DETECTORS}'
+                try:
+                    result = subprocess.run(
+                        cmd,
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        encoding='utf-8',
+                        errors='replace',
+                        timeout=90
+                    )
+                    slither_ran = True
+                except subprocess.TimeoutExpired:
+                    return self._create_warning_response(
+                        detected_version,
+                        reason="Slither timed out (>90s)"
+                    )
+                except Exception as e:
+                    return self._create_warning_response(
+                        detected_version,
+                        reason=f"Slither execution failed: {str(e)}"
+                    )
+
+            if not slither_ran and slither_error:
+                return self._create_warning_response(
+                    detected_version,
+                    reason=slither_error
+                )
 
             # [NEW] Check if JSON file was created (more reliable than stdout)
             if not os.path.exists(json_output_path):
@@ -393,22 +467,39 @@ class SmartSlitherWrapper:
                 else:
                     # [IMPROVED] Parse vulnerabilities with more detail
                     warnings = []
+                    # Filter out Informational/Optimization findings (noise for LLM)
+                    SKIP_IMPACTS = {'Informational', 'Optimization'}
                     for det in detectors:
-                        vuln_type = det.get('check', 'Unknown')
                         impact = det.get('impact', 'Unknown')
+                        if impact in SKIP_IMPACTS:
+                            continue
+
+                        vuln_type = det.get('check', 'Unknown')
                         desc = det.get('description', '')
 
-                        # Extract file + line numbers
+                        # Extract location: prefer element with type "node" (actual code line)
+                        # over element[0] which is often the contract/function definition
                         location = ""
                         if 'elements' in det and len(det['elements']) > 0:
-                            elem = det['elements'][0]
-                            source_mapping = elem.get('source_mapping', {})
+                            # Find element with type "node" first (most precise)
+                            best_elem = None
+                            for elem in det['elements']:
+                                if elem.get('type') == 'node':
+                                    best_elem = elem
+                                    break
+                            if best_elem is None:
+                                best_elem = det['elements'][0]
+
+                            source_mapping = best_elem.get('source_mapping', {})
                             lines = source_mapping.get('lines', [])
                             if lines:
-                                location = f" (line {lines[0]})"
+                                if len(lines) > 1:
+                                    location = f" (lines {lines[0]}-{lines[-1]})"
+                                else:
+                                    location = f" (line {lines[0]})"
 
-                        # Clean description (remove markdown formatting for AI)
-                        clean_desc = desc.replace('`', '').replace('\t', ' ')[:150]
+                        # Clean description - keep more context for LLM (400 chars)
+                        clean_desc = desc.replace('`', '').replace('\t', ' ')[:400]
                         warnings.append(f"[{impact}] {vuln_type}{location}: {clean_desc}")
 
                     # [v3.1] Append stripped protections context for LLM

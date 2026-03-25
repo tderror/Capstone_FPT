@@ -117,42 +117,62 @@ Metric đo: Recall@5, Precision@5, MRR trên retrieval task
 
 ## Hội đồng hỏi tiếp: "Chunk size bao nhiêu? Tại sao?"
 
-**Trả lời:** 512 tokens, 15% overlap (~77 tokens).
+**Trả lời:** AST chunking **KHÔNG dùng fixed chunk size** — mỗi chunk là **1 function nguyên vẹn**, kích thước tự nhiên theo độ dài function. Giới hạn duy nhất là **max 8192 tokens** (max_seq_length của CodeRankEmbed).
 
-### Chứng minh:
+### Tại sao không có fixed chunk size?
 
-**Nguồn 1 — NVIDIA Technical Blog (2025):**
-> "Finding the Best Chunking Strategy for Accurate AI Responses"
-> URL: developer.nvidia.com/blog/finding-the-best-chunking-strategy-for-accurate-ai-responses/
+**Đây chính là ưu điểm cốt lõi của AST chunking so với naive chunking:**
 
-- Test 128, 256, 512, 1024, 2048 tokens với 10%, 15%, 20% overlap
-- **512 tokens xử lý nhanh hơn 2048 tokens 3.2 lần**, giữ 94% recall
-- 1024 tokens + 15% overlap cho accuracy cao nhất trên FinanceBench
-- **15% overlap tốt nhất** trên FinanceBench (so với 10% và 20%)
-- Cho technical documents: khuyến nghị 512–1024 tokens + 15–20% overlap
+```
+Fixed-size chunking (512 tokens):
+  function withdraw() {
+      require(balance > 0);        ← chunk 1
+      msg.sender.call{value: amt}  ← chunk 1
+  ────────── CẮT NGANG ──────────
+      balance[msg.sender] = 0;     ← chunk 2  ← mất context!
+  }
+  → Embedding chunk 1 KHÔNG thấy state update → bỏ sót reentrancy
 
-**Nguồn 2 — Chroma Research Technical Report (07/2024):**
-> Smith & Troynikov, "Evaluating Chunking Strategies for Retrieval"
-> URL: research.trychroma.com/evaluating-chunking
+AST Function-Level chunking:
+  function withdraw() {            ← chunk = TOÀN BỘ function
+      require(balance > 0);
+      msg.sender.call{value: amt}
+      balance[msg.sender] = 0;
+  }
+  → Embedding thấy ĐẦY ĐỦ logic → detect được reentrancy
+```
 
-- RecursiveCharacterTextSplitter @400 tokens: recall **88.1–89.5%**
-- ClusterSemanticChunker @400 tokens: recall **91.3%** (nhưng tốn compute hơn nhiều)
-- LLMSemanticChunker: recall **91.9%** (cao nhất nhưng chậm nhất)
-- Kết luận: "Heuristic chunking strategies often perform well when parametrized appropriately"
+### Kích thước chunk trong thực tế:
 
-**Nguồn 3 — Vectara NAACL 2025 Findings:**
-- Fixed-size chunking **consistently outperformed** semantic chunking trên realistic document sets
-- Chi phí compute của semantic chunking KHÔNG justified bởi improvement
+| Đặc điểm | Giá trị |
+|---|---|
+| **Đơn vị chunk** | 1 function Solidity hoàn chỉnh |
+| **Kích thước trung bình** | ~50–200 dòng code (~100–500 tokens) |
+| **Giới hạn trên (embedding)** | 8192 tokens (CodeRankEmbed max_seq_length) |
+| **Overlap** | **Không cần** — mỗi function là đơn vị độc lập, không bị cắt |
 
-**Tại sao 512 mà không phải 1024 cho Smart Contract?**
-- Solidity function trung bình: 100–400 tokens
-- 512 tokens vừa đủ chứa 1 function hoàn chỉnh + context metadata
-- 1024 tokens → có thể trộn 2–3 functions nhỏ vào 1 chunk → mất precision
+### Tại sao không cần overlap?
 
-**Tại sao 15% overlap?**
-- NVIDIA test cụ thể 10%, 15%, 20% → **15% cho kết quả tốt nhất**
-- 10%: có thể mất context ở function boundary
-- 20%: tăng storage ~20%, marginal gain không đáng
+- Overlap chỉ cần thiết khi **fixed-size chunking cắt ngang logic** → cần overlap để giữ context ở ranh giới
+- AST chunking chunk theo **semantic boundary** (function) → không có ranh giới bị cắt → **overlap = 0**
+
+### Nếu function quá dài (edge case)?
+
+- CodeRankEmbed tự truncate ở 8192 tokens
+- Trong thực tế Solidity, **rất hiếm** function dài hơn 8192 tokens (~400+ dòng code)
+- Solidity best practice khuyến khích function ngắn gọn → hầu hết function nằm thoải mái trong giới hạn
+
+### So sánh với fixed-size chunking:
+
+| Tiêu chí | Fixed-size (512 tokens) | AST Function-Level |
+|---|---|---|
+| Semantic integrity | Cắt ngang logic function | **Giữ nguyên function** |
+| Overlap cần thiết | Có (15–20%) | **Không cần** |
+| Metadata enrichment | Khó gắn (chunk không có nghĩa) | **Dễ gắn** (visibility, modifiers, risk indicators) |
+| Retrieval quality cho code | Thấp (chunk bị diluted) | **Cao** (chunk = semantic unit) |
+| Storage efficiency | Có redundancy do overlap | **Không redundancy** |
+
+> **Tóm lại cho hội đồng:** "Chúng em dùng AST function-level chunking — mỗi chunk là 1 function nguyên vẹn, không có fixed size và không cần overlap. Kích thước chunk phụ thuộc vào độ dài function (trung bình 100–500 tokens), giới hạn bởi max 8192 tokens của embedding model CodeRankEmbed. Lý do: giữ semantic integrity, tránh cắt ngang logic, và cho phép gắn risk metadata (external calls, state changes, missing guards) vào từng chunk."
 
 ---
 
@@ -784,7 +804,7 @@ Table 1: Overall System Comparison on SolidiFI Test Set
 |---|---|---|---|---|
 | RAG Architecture | Knowledge-level RAG | Vulnerability knowledge (cause, trigger, fix) tốt hơn raw code retrieval | +16–24% accuracy, +12.96% vs LLMAO | Vul-RAG, ACM TOSEM 2025 |
 | Chunking | AST Function-Level | Vulnerability nằm trong function; giữ nguyên syntax boundary | +5.5pts RepoEval, +4.3pts CrossCodeEval | cAST, EMNLP 2025 Findings |
-| Chunk size | 512 tokens, 15% overlap | Optimal cho technical documents | 94% recall, 3.2x faster than 2048 | NVIDIA Technical Blog 2025 |
+| Chunk size | Không cố định (1 function/chunk), max 8192 tokens | AST giữ nguyên semantic boundary, không cần overlap | Trung bình 100–500 tokens/function, nằm trong giới hạn CodeRankEmbed | Domain-specific design |
 | AST Parser | tree-sitter-solidity | Nhanh, không cần compile | 96.1% success rate trên 353K pairs | SoliDiffy, arXiv 11/2024 |
 | Embedding | CodeRankEmbed, 768d | SOTA trên CoIR benchmark, 137M params, local, free | Open-source, reproducible, code-specific training (CoRNStack 21M) | Suresh et al., ICLR 2025 |
 | Vector DB | Qdrant (self-hosted) | Free, hybrid search, metadata filter | ~5ms latency @100K vectors | Community benchmarks |
