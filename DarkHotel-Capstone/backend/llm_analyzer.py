@@ -1,8 +1,9 @@
 """
 Advanced LLM Analyzer với Chain-of-Thought Prompting
-Using Google GenAI SDK
+Using Google GenAI SDK via Vertex AI
 """
 from google import genai
+from google.genai.types import HttpOptions
 import json
 import re
 import time
@@ -12,16 +13,22 @@ import os
 class LLMAnalyzer:
     """
     Wrapper cho LLM analysis với advanced prompting techniques
-    Using new Google GenAI SDK
+    Using Google GenAI SDK via Vertex AI
     """
 
-    def __init__(self, api_key: str,
+    def __init__(self, project: str, location: str = "us-central1",
                  model: str = "gemini-2.5-pro"):
-        self.api_key = api_key
+        self.project = project
+        self.location = location
         self.model = model
 
-        # Initialize GenAI client (API key passed directly)
-        self.client = genai.Client(api_key=api_key)
+        # Initialize GenAI client with Vertex AI
+        self.client = genai.Client(
+            http_options=HttpOptions(api_version="v1beta1"),
+            vertexai=True,
+            project=project,
+            location=location,
+        )
 
         self.max_retries = 5
         self.retry_delay = 60
@@ -479,7 +486,7 @@ Slither warnings: {slither_warnings}
                     print(f"\n[RETRY] Attempt {attempt + 1}/{self.max_retries} after {wait_time}s...")
                     time.sleep(wait_time)
 
-                # Use new Google GenAI SDK
+                # Use GenAI SDK via Vertex AI
                 response = self.client.models.generate_content(
                     model=self.model,
                     contents=full_prompt
@@ -511,8 +518,9 @@ Slither warnings: {slither_warnings}
                 prompt_tokens = 0
                 completion_tokens = 0
                 if hasattr(response, 'usage_metadata') and response.usage_metadata:
-                    prompt_tokens = getattr(response.usage_metadata, 'prompt_token_count', 0) or 0
-                    completion_tokens = getattr(response.usage_metadata, 'candidates_token_count', 0) or 0
+                    usage = response.usage_metadata
+                    prompt_tokens = getattr(usage, 'prompt_token_count', 0) or 0
+                    completion_tokens = getattr(usage, 'candidates_token_count', 0) or 0
 
                 return {
                     'success': True,
@@ -571,10 +579,12 @@ Slither warnings: {slither_warnings}
 
 # Test
 if __name__ == "__main__":
-    # Cần API key để test
-    API_KEY = os.getenv("GEMINI_API_KEY", "")
+    # Cần Google Cloud Project để test
+    # Set GOOGLE_APPLICATION_CREDENTIALS trước khi chạy
+    PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+    LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 
-    llm = LLMAnalyzer(API_KEY)
+    llm = LLMAnalyzer(project=PROJECT_ID, location=LOCATION)
 
     test_code = """
     function withdraw() public {

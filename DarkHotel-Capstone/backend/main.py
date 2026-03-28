@@ -48,10 +48,16 @@ app.add_middleware(
 )
 
 # --- Config from Environment Variables ---
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    raise ValueError("GEMINI_API_KEY not found in environment variables! Create .env file with GEMINI_API_KEY=your_key")
+# Set Google Application Credentials for Vertex AI authentication
+_gac = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+if _gac:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = _gac
 
+GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+if not GOOGLE_CLOUD_PROJECT:
+    raise ValueError("GOOGLE_CLOUD_PROJECT not found in environment variables! Create .env file with GOOGLE_CLOUD_PROJECT=your_project_id")
+
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro")
 QDRANT_DB_PATH = os.getenv("QDRANT_DB_PATH", "./qdrant_db_v7")
 
@@ -63,7 +69,7 @@ ast_parser = SolidityASTParser()
 from slither_smart_wrapper import SmartSlitherWrapper
 slither = SmartSlitherWrapper()
 smart_rag = SmartRAGSystem(persist_directory=QDRANT_DB_PATH)
-llm = LLMAnalyzer(api_key=API_KEY, model=MODEL_NAME)
+llm = LLMAnalyzer(project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_LOCATION, model=MODEL_NAME)
 rag_stats = smart_rag.get_stats()
 print(f"[INIT] All modules ready! (tree-sitter + Slither + RAG v6 [{rag_stats['total_cases']} cases] + CodeRankEmbed + {MODEL_NAME})")
 

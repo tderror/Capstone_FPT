@@ -27,14 +27,21 @@ from dotenv import load_dotenv
 BACKEND_DIR = Path(__file__).parent.parent / "backend"
 load_dotenv(BACKEND_DIR / ".env")
 
-API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro")
 
-if not API_KEY:
-    print("ERROR: No API key found. Set GEMINI_API_KEY in backend/.env")
+# Set Google Application Credentials for Vertex AI
+_gac = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+if _gac:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = _gac
+
+if not GOOGLE_CLOUD_PROJECT:
+    print("ERROR: No project found. Set GOOGLE_CLOUD_PROJECT in backend/.env")
     sys.exit(1)
 
 from google import genai
+from google.genai.types import HttpOptions
 
 # --- CONFIG ---
 DATASET_DIR = Path(__file__).parent / "external_datasets" / "SmartBugs-Curated" / "dataset"
@@ -449,7 +456,12 @@ def run_evaluation(resume=False):
         print(f"  {t}: {c}")
     print("-" * 70)
 
-    client = genai.Client(api_key=API_KEY)
+    client = genai.Client(
+        http_options=HttpOptions(api_version="v1beta1"),
+        vertexai=True,
+        project=GOOGLE_CLOUD_PROJECT,
+        location=GOOGLE_CLOUD_LOCATION,
+    )
 
     results = []
     evaluated_files = []

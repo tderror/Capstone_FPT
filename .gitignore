@@ -21,3 +21,11 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Google Cloud SDK
+google-cloud-sdk/
+GoogleCloudSDKInstaller.exe
+uninstaller.exe
+supercloud-16x16.ico
+cloud_env.bat
+install_mode
