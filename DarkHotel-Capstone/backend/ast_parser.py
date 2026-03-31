@@ -152,7 +152,9 @@ class SolidityASTParser:
         """Parse using tree-sitter-solidity for fast, accurate AST"""
         tree = self._ts_parser.parse(bytes(code, "utf-8"))
         root = tree.root_node
+        code_bytes = bytes(code, "utf-8")
         contracts = []
+        free_functions = []
 
         for node in root.children:
             if node.type in (
@@ -162,6 +164,26 @@ class SolidityASTParser:
             ):
                 contract = self._ts_extract_contract(node, code)
                 contracts.append(contract)
+            elif node.type == "function_definition":
+                # Solidity >= 0.7.1 free functions (defined outside any contract)
+                func = self._ts_extract_function(
+                    node, code, code_bytes, state_var_names=[]
+                )
+                if func:
+                    free_functions.append(func)
+
+        # Group free functions into a synthetic contract
+        if free_functions:
+            contracts.append(Contract(
+                name="(free functions)",
+                contract_type="free",
+                start_line=free_functions[0].start_line,
+                end_line=free_functions[-1].end_line,
+                inheritance=[],
+                state_variables=[],
+                functions=free_functions,
+                modifiers=[],
+            ))
 
         return ASTResult(
             solidity_version=version,
@@ -377,13 +399,6 @@ class SolidityASTParser:
                 mod_name_node = self._ts_find_child(child, "identifier")
                 if mod_name_node:
                     mods.append(self._ts_node_text(mod_name_node, code_bytes))
-        # Also check known modifier keywords in function text
-        known_mods = ['onlyOwner', 'nonReentrant', 'whenNotPaused', 'whenPaused',
-                      'onlyAdmin', 'onlyRole', 'initializer', 'reinitializer']
-        for mod in known_mods:
-            if mod in func_code and mod not in mods:
-                mods.append(mod)
-
         # External call & state change detection (reuse existing regex helpers)
         has_ext_call = self._has_external_call(func_code)
         has_state_change = mutability not in ("view", "pure") and self._has_state_change(func_code, state_var_names)
@@ -683,15 +698,19 @@ class SolidityASTParser:
         return modifiers
 
     def _extract_used_modifiers(self, func_code: str) -> List[str]:
-        """Extract modifiers used in function declaration"""
+        """Extract modifiers used in function declaration (signature only, not body)"""
         modifiers = []
 
-        # Common modifiers
+        # Only check the function signature (before the first '{') to avoid
+        # false positives from comments, strings, or variable names in the body
+        brace_pos = func_code.find('{')
+        signature = func_code[:brace_pos] if brace_pos != -1 else func_code
+
         known_mods = ['onlyOwner', 'nonReentrant', 'whenNotPaused', 'whenPaused',
                       'onlyAdmin', 'onlyRole', 'initializer', 'reinitializer']
 
         for mod in known_mods:
-            if mod in func_code:
+            if re.search(rf'\b{mod}\b', signature):
                 modifiers.append(mod)
 
         return modifiers
@@ -764,6 +783,14 @@ class SolidityASTParser:
         chunks = []
 
         for contract in result.contracts:
+            # Build state variable context for this contract
+            state_vars_context = ""
+            if contract.state_variables:
+                sv_lines = []
+                for sv in contract.state_variables:
+                    sv_lines.append(f"    {sv.var_type} {sv.visibility} {sv.name};")
+                state_vars_context = "\n".join(sv_lines)
+
             for func in contract.functions:
                 # Determine risk indicators
                 risk_indicators = []
@@ -781,10 +808,26 @@ class SolidityASTParser:
                 if "nonReentrant" not in func.modifiers and func.has_external_call:
                     risk_indicators.append("no_reentrancy_guard")
 
+                # Additional vulnerability pattern detection (SWC-115, 116, 120, etc.)
+                if re.search(r'\btx\.origin\b', func.code):
+                    risk_indicators.append("uses_tx_origin")
+                if re.search(r'\b(block\.timestamp|now)\b', func.code):
+                    risk_indicators.append("uses_block_timestamp")
+                if re.search(r'\.delegatecall\b', func.code):
+                    risk_indicators.append("has_delegatecall")
+                if re.search(r'\b(blockhash|block\.difficulty|block\.prevrandao)\b', func.code):
+                    risk_indicators.append("uses_weak_randomness")
+
+                # Include state variable context for better RAG embedding
+                enriched_code = func.code
+                if state_vars_context:
+                    enriched_code = f"// State variables:\n{state_vars_context}\n\n{func.code}"
+
                 chunk = {
                     "name": func.name,
                     "contract": contract.name,
                     "code": func.code,
+                    "code_with_context": enriched_code,
                     "start_line": func.start_line,
                     "end_line": func.end_line,
                     "visibility": func.visibility,

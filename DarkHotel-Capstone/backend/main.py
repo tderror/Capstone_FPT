@@ -171,14 +171,23 @@ async def analyze_contract(file: UploadFile = File(...)):
         # Define RAG search coroutine
         async def run_rag_search():
             rag_candidates = []
-            if risky_functions:
-                for func in risky_functions:
-                    search_query = func['code']
-                    # Fix #5: Infer filter_type from code patterns to reduce noise
-                    filter_type = _infer_filter_type(func['code'])
-                    # Fix #8: Request 15 candidates per function (reranker needs larger pool)
+            # Search ALL function chunks (not just risky) to catch
+            # vulnerability types that don't involve external calls / state changes
+            # (e.g. SWC-115 tx.origin, SWC-116 timestamp, SWC-120 randomness)
+            if function_chunks:
+                for func in function_chunks:
+                    # Use enriched code (with state variable context) for better
+                    # embedding match against NL+code KB documents
+                    search_code = func.get('code_with_context', func['code'])
+                    search_query = (
+                        f"Solidity function {func['name']} "
+                        f"in contract {func['contract']}:\n{search_code}"
+                    )
+                    # Risky functions get more candidates; others get fewer
+                    # No hard filter_type — let vector similarity handle relevance
+                    top_k = 15 if func['priority'] > 0 else 5
                     func_results = await asyncio.to_thread(
-                        smart_rag.search_similar, search_query, 15, filter_type
+                        smart_rag.search_similar, search_query, top_k, None
                     )
                     for r in func_results:
                         r['source_function'] = func['name']
@@ -223,7 +232,7 @@ async def analyze_contract(file: UploadFile = File(...)):
 
         print(f"   -> Slither: {len(slither_warnings)} warnings, hints: {slither_hints if slither_hints else 'none'}")
         print(f"   -> Slither vuln types: {slither_vuln_types if slither_vuln_types else 'none'}")
-        print(f"   -> RAG: searched {len(risky_functions) if risky_functions else 'full contract'}")
+        print(f"   -> RAG: searched {len(function_chunks)} functions ({len(risky_functions)} risky)")
 
         # Deduplicate by (vulnerability_type, swc_id, source_function, audit_company)
         # Fix #6: Relaxed from max 2 to max 3 per key — gives cross-encoder
@@ -251,18 +260,25 @@ async def analyze_contract(file: UploadFile = File(...)):
             slither_context = f" Slither detected: {', '.join(slither_vuln_types)}."
 
         if risky_functions:
-            # Use only the top risky function for rerank query.
-            # ms-marco cross-encoder is trained on short NL queries (~20-50 tokens).
-            # Concatenating multiple functions degrades reranking quality.
-            func = risky_functions[0]
-            indicators = ", ".join(func.get('risk_indicators', []))
-            inferred_type = _infer_filter_type(func.get('code', ''))
-            vuln_hint = f" Suspected: {inferred_type}." if inferred_type else ""
+            # Build rerank query from top risky functions (up to 3).
+            # ms-marco cross-encoder works best with short NL queries,
+            # so we summarize multiple functions rather than concatenating full code.
+            top_funcs = risky_functions[:3]
+            func_summaries = []
+            vuln_hints = set()
+            for func in top_funcs:
+                indicators = ", ".join(func.get('risk_indicators', []))
+                func_summaries.append(
+                    f"function {func['name']} in {func['contract']} ({indicators})"
+                )
+                inferred = _infer_filter_type(func.get('code', ''))
+                if inferred:
+                    vuln_hints.add(inferred)
+            funcs_desc = "; ".join(func_summaries)
+            vuln_hint = f" Suspected: {', '.join(vuln_hints)}." if vuln_hints else ""
             rerank_query = (
-                f"Solidity vulnerability in function {func['name']} "
-                f"of contract {func['contract']}. "
-                f"Risk: {indicators}.{vuln_hint}{slither_context} "
-                f"Code: {func['code'][:300]}"
+                f"Solidity vulnerabilities: {funcs_desc}.{vuln_hint}{slither_context} "
+                f"Code: {top_funcs[0]['code'][:300]}"
             )
         else:
             # Fallback: no risky functions detected by AST.

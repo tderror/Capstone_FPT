@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DarkHotel Capstone — Báo Cáo Chi Tiết Đồ Án</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --card: #111827;
+    --card2: #1a2236;
+    --border: #1e293b;
+    --accent: #3b82f6;
+    --accent2: #8b5cf6;
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --cyan: #06b6d4;
+    --pink: #ec4899;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --white: #f8fafc;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    padding: 80px 0 60px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(59,130,246,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(139,92,246,0.08) 0%, transparent 50%);
+    animation: pulse 8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  .hero h1 {
+    font-size: 3.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+    z-index: 1;
+  }
+  .hero .subtitle {
+    font-size: 1.25rem;
+    color: var(--muted);
+    margin-top: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero .version-badge {
+    display: inline-block;
+    background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(59,130,246,0.3);
+    color: var(--accent);
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  /* Container */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  /* Section */
+  section { padding: 60px 0; }
+  .section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title .icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .section-desc {
+    color: var(--muted);
+    font-size: 1.05rem;
+    margin-bottom: 36px;
+    max-width: 800px;
+  }
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+  }
+  .card:hover { border-color: rgba(59,130,246,0.3); }
+  .card h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 900px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  }
+  /* Stats */
+  .stat-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+  }
+  .stat-card .stat-num {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .stat-card .stat-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  /* Pipeline */
+  .pipeline-container {
+    position: relative;
+    padding: 20px 0;
+  }
+  .pipeline-step {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 0;
+    position: relative;
+  }
+  .pipeline-step:last-child .step-line { display: none; }
+  .step-marker {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .step-line {
+    position: absolute;
+    left: 28px;
+    top: 56px;
+    width: 3px;
+    height: calc(100% - 56px);
+    z-index: 1;
+  }
+  .step-content {
+    flex: 1;
+    padding-bottom: 40px;
+  }
+  .step-content h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .step-content p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+  }
+  /* Detail box inside steps */
+  .detail-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 12px;
+    font-size: 0.92rem;
+  }
+  .detail-box h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+  .detail-box ul { list-style: none; padding: 0; }
+  .detail-box ul li {
+    padding: 4px 0;
+    padding-left: 20px;
+    position: relative;
+    color: var(--muted);
+  }
+  .detail-box ul li::before {
+    content: '›';
+    position: absolute;
+    left: 4px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  /* Parallel box */
+  .parallel-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  @media (max-width: 800px) { .parallel-box { grid-template-columns: 1fr; } }
+  .parallel-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+  }
+  .parallel-item::before {
+    content: 'PARALLEL';
+    position: absolute;
+    top: -10px;
+    right: 16px;
+    background: var(--accent2);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+  }
+  .parallel-item h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .parallel-item ul { list-style: none; padding: 0; }
+  .parallel-item ul li {
+    padding: 3px 0 3px 18px;
+    position: relative;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .parallel-item ul li::before {
+    content: '•';
+    position: absolute;
+    left: 2px;
+    color: var(--accent);
+  }
+  /* Tags */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .tag-blue { background: rgba(59,130,246,0.15); color: var(--accent); }
+  .tag-purple { background: rgba(139,92,246,0.15); color: var(--accent2); }
+  .tag-green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .tag-orange { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .tag-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .tag-cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
+  .tag-pink { background: rgba(236,72,153,0.15); color: var(--pink); }
+  /* Table */
+  .styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  .styled-table th {
+    background: var(--card2);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    border-bottom: 2px solid var(--border);
+  }
+  .styled-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .styled-table tr:hover td { background: rgba(59,130,246,0.03); }
+  /* Code block */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    overflow-x: auto;
+    line-height: 1.6;
+    color: #c9d1d9;
+  }
+  .code-block .keyword { color: #ff7b72; }
+  .code-block .string { color: #a5d6ff; }
+  .code-block .comment { color: #8b949e; }
+  .code-block .func { color: #d2a8ff; }
+  .code-block .num { color: #79c0ff; }
+  /* Diagram */
+  .arch-diagram {
+    background: linear-gradient(135deg, #0d1117 0%, #111827 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    margin: 24px 0;
+    text-align: center;
+    overflow-x: auto;
+  }
+  .arch-diagram pre {
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    display: inline-block;
+    text-align: left;
+    color: var(--muted);
+  }
+  /* Metric bars */
+  .metric-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .metric-label {
+    width: 200px;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  .metric-bar-bg {
+    flex: 1;
+    height: 28px;
+    background: var(--card2);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .metric-bar {
+    height: 100%;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: white;
+    transition: width 1s ease;
+  }
+  /* SWC Cards */
+  .swc-card {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 24px;
+    border-left: 4px solid;
+  }
+  .swc-card h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .swc-card p {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  /* Footer */
+  footer {
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    padding: 40px 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  /* Flow arrow */
+  .flow-arrow {
+    text-align: center;
+    color: var(--accent);
+    font-size: 1.6rem;
+    margin: 8px 0;
+    opacity: 0.5;
+  }
+  /* TOC */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin: 40px 0;
+  }
+  .toc h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .toc-list { list-style: none; padding: 0; columns: 2; }
+  @media (max-width: 700px) { .toc-list { columns: 1; } }
+  .toc-list li { padding: 5px 0; }
+  .toc-list a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+  }
+  .toc-list a:hover { color: var(--accent2); text-decoration: underline; }
+  .toc-list .toc-num {
+    display: inline-block;
+    width: 28px;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 40px 0;
+  }
+  /* Highlight */
+  .highlight {
+    background: rgba(59,130,246,0.08);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    border-radius: 0 10px 10px 0;
+    margin: 16px 0;
+    font-size: 0.93rem;
+    color: var(--text);
+  }
+  /* Sub-step list */
+  .sub-steps { list-style: none; padding: 0; margin-top: 10px; }
+  .sub-steps li {
+    padding: 6px 0 6px 24px;
+    position: relative;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .sub-steps li::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 14px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+  /* Knowledge base stats bar */
+  .kb-bar {
+    display: flex;
+    height: 32px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  .kb-bar > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="container">
+    <h1>DarkHotel Capstone</h1>
+    <p class="subtitle">AI-Powered Solidity Smart Contract Vulnerability Detection System</p>
+    <div class="version-badge">Pipeline v6.0 — 6-Step Sequential Architecture</div>
+  </div>
+</div>
+
+<!-- ===== TOC ===== -->
+<div class="container">
+  <nav class="toc">
+    <h2>Muc Luc</h2>
+    <ol class="toc-list">
+      <li><span class="toc-num">01</span><a href="#overview">Tong Quan Du An</a></li>
+      <li><span class="toc-num">02</span><a href="#architecture">Kien Truc He Thong</a></li>
+      <li><span class="toc-num">03</span><a href="#pipeline">Pipeline Chi Tiet 6 Buoc</a></li>
+      <li><span class="toc-num">04</span><a href="#technologies">Cong Nghe Su Dung</a></li>
+      <li><span class="toc-num">05</span><a href="#knowledgebase">Co So Tri Thuc (Knowledge Base)</a></li>
+      <li><span class="toc-num">06</span><a href="#models">Cac Mo Hinh ML/AI</a></li>
+      <li><span class="toc-num">07</span><a href="#vulnerabilities">3 Loai Lo Hong Muc Tieu</a></li>
+      <li><span class="toc-num">08</span><a href="#frontend">Giao Dien Frontend</a></li>
+      <li><span class="toc-num">09</span><a href="#evaluation">Ket Qua Danh Gia</a></li>
+      <li><span class="toc-num">10</span><a href="#files">Cau Truc Thu Muc & Files</a></li>
+    </ol>
+  </nav>
+</div>
+
+<!-- ===== 1. TONG QUAN ===== -->
+<section id="overview">
+  <div class="container">
+    <h2 class="section-title">
+      <span class="icon" style="background:rgba(59,130,246,0.15);color:var(--accent)">01</span>
+      Tong Quan Du An
+    </h2>
+    <p class="section-desc">DarkHotel la he thong phat hien lo hong bao mat trong smart contract Solidity, su dung ket hop phan tich tinh (Slither), tim kiem ngu nghia (RAG), va suy luan LLM (Gemini 2.5 Pro).</p>
+
+    <div class="grid-4">
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--accent)">6</div>
+        <div class="stat-label">Buoc Pipeline</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--accent2)">458</div>
+        <div class="stat-label">Mau Audit Trong KB</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--green)">3</div>
+        <div class="stat-label">Loai SWC Muc Tieu</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--orange)">4</div>
+        <div class="stat-label">Mo Hinh ML/AI</div>
+      </div>
+    </div>
+
+    <div class="highlight" style="margin-top:28px">
+      <strong>Diem noi bat:</strong> He thong ket hop 3 phuong phap (Static Analysis + RAG + LLM) de dat do chinh xac cao. Su dung CRAG (Corrective RAG) lam cong chat luong, chi truyen bang chung lien quan cho LLM. Toan bo pipeline tu dong, tu upload file .sol den bao cao JSON chi tiet.
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
+
+<!-- ===== 2. KIEN TRUC ===== -->
+<section id="architecture">
+  <div class="container">
+    <h2 class="section-title">
+      <span class="icon" style="background:rgba(139,92,246,0.15);color:var(--accent2)">02</span>
+      Kien Truc He Thong
+    </h2>
+    <p class="section-desc">He thong gom 3 tang chinh: Frontend (Next.js), Backend (FastAPI), va Co so tri thuc (Qdrant Vector DB). Backend dieu phoi pipeline 6 buoc xu ly.</p>
+
+    <div class="arch-diagram">
+      <pre>
+ ┌─────────────────────┐        POST /analyze        ┌─────────────────────────┐
+ │    <span style="color:var(--cyan)">FRONTEND</span>          │  ─────────────────────────>  │      <span style="color:var(--accent)">BACKEND</span>             │
+ │    Next.js 16        │                              │      FastAPI            │
+ │    React 19          │  <─────────────────────────  │      Python 3.11+       │
+ │    TailwindCSS 4     │       JSON Response          │      uvicorn            │
+ │    localhost:3000     │                              │      localhost:8000      │
+ └─────────────────────┘                              └──────────┬──────────────┘
+                                                                  │
+                                          ┌───────────────────────┼───────────────────────┐
+                                          │                       │                       │
+                                   ┌──────▼──────┐       ┌───────▼───────┐      ┌────────▼────────┐
+                                   │  <span style="color:var(--orange)">Slither</span>     │       │ <span style="color:var(--green)">CodeRankEmbed</span> │      │   <span style="color:var(--pink)">Gemini</span>        │
+                                   │  Static      │       │  137M, 768d   │      │   2.5 Pro       │
+                                   │  Analysis    │       │  Bi-Encoder   │      │   (Google API)  │
+                                   │  (Local)     │       └───────┬───────┘      └─────────────────┘
+                                   └─────────────┘               │
+                                                          ┌──────▼──────┐
+                                                          │   <span style="color:var(--cyan)">Qdrant</span>     │
+                                                          │  Vector DB  │
+                                                          │  458 cases  │
+                                                          └──────┬──────┘
+                                                                 │
+                                                          ┌──────▼──────┐
+                                                          │<span style="color:var(--accent2)">CrossEncoder</span> │
+                                                          │  ms-marco   │
+                                                          │  33M Rerank │
+                                                          │  + CRAG Gate│
+                                                          └─────────────┘
+      </pre>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>4 Thanh Phan ML/AI</h3>
+        <table class="styled-table">
+          <tr><th>Thanh phan</th><th>Vai tro</th><th>Chay o dau</th></tr>
+          <tr><td><span class="tag tag-green">CodeRankEmbed</span></td><td>Nhung vector (bi-encoder)</td><td>Cuc bo (CPU)</td></tr>
+          <tr><td><span class="tag tag-purple">ms-marco-MiniLM</span></td><td>Xep hang lai (cross-encoder)</td><td>Cuc bo (CPU)</td></tr>
+          <tr><td><span class="tag tag-orange">CRAGEvaluator</span></td><td>Cong chat luong RAG</td><td>Cuc bo (Rule-based)</td></tr>
+          <tr><td><span class="tag tag-pink">Gemini 2.5 Pro</span></td><td>Suy luan & phan doan</td><td>Google API</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Giao Tiep API</h3>
+        <div class="detail-box">
+          <h4>GET / — Health Check</h4>
+          <p style="color:var(--muted);font-size:0.88rem">Tra ve trang thai cac module: ast_parser, slither, smart_rag, embedding, reranker, crag, vector_db, llm</p>
+        </div>
+        <div class="detail-box" style="margin-top:10px">
+          <h4>POST /analyze — Phan Tich Chinh</h4>
+          <p style="color:var(--muted);font-size:0.88rem">Nhan file .sol (max 5MB), chay pipeline 6 buoc, tra ve JSON bao cao voi verdict, vulnerabilities, rag_findings, slither_analysis, reasoning</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
+
+<!-- ===== 3. PIPELINE CHI TIET ===== -->
+<section id="pipeline">
+  <div class="container">
+    <h2 class="section-title">
+      <span class="icon" style="background:rgba(34,197,94,0.15);color:var(--green)">03</span>
+      Pipeline Chi Tiet 6 Buoc
+    </h2>
+    <p class="section-desc">Day la loi cua he thong DarkHotel — pipeline 6 buoc xu ly tuan tu, trong do Buoc 2 va 3 chay song song (asyncio.gather) de toi uu thoi gian.</p>
+
+    <!-- Pipeline flow diagram -->
+    <div class="arch-diagram" style="margin-bottom:40px">
+      <pre>
+    <span style="color:var(--white)">INPUT: file .sol</span>
+           │
+    ┌──────▼──────┐
+    │  <span style="color:var(--cyan)">BUOC 1</span>      │   AST Chunking (tree-sitter + regex fallback)
+    │  Parse Code │   Trich xuat: functions, state vars, modifiers, risk indicators
+    └──────┬──────┘
+           │
+    ┌──────▼──────────────────────────────────────────────┐
+    │  <span style="color:var(--accent2)">BUOC 2 + BUOC 3 (SONG SONG — asyncio.gather)</span>        │
+    │  ┌─────────────────┐    ┌─────────────────────┐    │
+    │  │ <span style="color:var(--orange)">BUOC 2: Slither</span>  │    │ <span style="color:var(--green)">BUOC 3: RAG Search</span>  │    │
+    │  │ 7 detectors      │    │ CodeRankEmbed 768d  │    │
+    │  │ Static analysis  │    │ Qdrant vector DB    │    │
+    │  │ Auto solc mgmt   │    │ Per-function search │    │
+    │  └────────┬────────┘    └──────────┬──────────┘    │
+    └───────────┼─────────────────────────┼──────────────┘
+                │                         │
+    ┌───────────▼─────────────────────────▼──────────────┐
+    │  <span style="color:var(--accent)">BUOC 4: Reranking + CRAG Gate</span>                       │
+    │  4a. Cross-Encoder ms-marco rerank (top 5)         │
+    │  4b. CRAG evaluate: CORRECT / AMBIGUOUS / INCORRECT│
+    └──────────────────────┬─────────────────────────────┘
+                           │
+    ┌──────────────────────▼─────────────────────────────┐
+    │  <span style="color:var(--pink)">BUOC 5: LLM Chain-of-Thought</span>                        │
+    │  Gemini 2.5 Pro + Prompt Tiering (Tier1 + Tier2)   │
+    │  14 anti-hallucination rules + JSON output          │
+    └──────────────────────┬─────────────────────────────┘
+                           │
+    ┌──────────────────────▼─────────────────────────────┐
+    │  <span style="color:var(--cyan)">BUOC 6: Generate Report</span>                             │
+    │  Ket hop tat ca ket qua → JSON response             │
+    └────────────────────────────────────────────────────┘
+      </pre>
+    </div>
+
+    <!-- Step-by-step detail -->
+    <div class="pipeline-container">
+
+      <!-- STEP 1 -->
+      <div class="pipeline-step">
+        <div>
+          <div class="step-marker" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:white">1</div>
+          <div class="step-line" style="background:linear-gradient(to bottom,#06b6d4,#8b5cf6)"></div>
+        </div>
+        <div class="step-content">
+          <h3 style="color:var(--cyan)">BUOC 1 — AST Chunking & Risk Detection</h3>
+          <p>Phan tich cu phap ma nguon Solidity, trich xuat cau truc va nhan dien cac ham co rui ro.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <span class="tag tag-cyan">ast_parser.py</span>
+            <span class="tag tag-blue">tree-sitter-solidity</span>
+            <span class="tag tag-orange">regex fallback</span>
+          </div>
+          <div class="detail-box">
+            <h4>Thu tu uu tien phan tich:</h4>
+            <ul>
+              <li><strong>tree-sitter-solidity</strong> (chinh): Nhanh, chinh xac, khong can bien dich. Su dung WASM parser de phan tich cu phap AST.</li>
+              <li><strong>Regex</strong> (du phong): Dung brace counting (ton trong strings/comments) de trich xuat ham co ban.</li>
+            </ul>
+            <h4 style="margin-top:14px">Thong tin trich xuat:</h4>
+            <ul>
+              <li><strong>Contracts:</strong> Ten, loai (contract/interface/library/abstract), ke thua, pham vi dong</li>
+              <li><strong>Functions:</strong> Ten, visibility (public/external/internal/private), mutability, modifiers, parameters</li>
+              <li><strong>State Variables:</strong> Ten, kieu du lieu, visibility, co phai mapping/array</li>
+              <li><strong>Modifiers:</strong> nonReentrant, onlyOwner, whenNotPaused...</li>
+            </ul>
+            <h4 style="margin-top:14px">Risk Indicators (phat hien rui ro):</h4>
+            <ul>
+              <li><strong>has_external_call:</strong> Phat hien .call{value:}, .delegatecall, .send(), .transfer()</li>
+              <li><strong>has_state_change:</strong> Cap nhat mapping, ghi vao storage</li>
+              <li><strong>potential_reentrancy:</strong> Goi ben ngoai + thay doi trang thai (khong co mutex)</li>
+              <li><strong>no_reentrancy_guard:</strong> Khong co modifier nonReentrant tren ham co external call</li>
+              <li><strong>uses_tx_origin:</strong> Su dung tx.origin (SWC-115)</li>
+              <li><strong>has_delegatecall:</strong> Su dung delegatecall (rui ro cao)</li>
+            </ul>
+          </div>
+          <div class="detail-box" style="margin-top:10px">
+            <h4>Output — ASTResult:</h4>
+            <div class="code-block">
+<span class="comment">// Ket qua phan tich AST</span>
+{
+  <span class="string">"solidity_version"</span>: <span class="string">"^0.4.24"</span>,
+  <span class="string">"contracts"</span>: [Contract{name, functions[], state_variables[], modifiers[]}],
+  <span class="string">"total_lines"</span>: <span class="num">120</span>,
+  <span class="string">"parse_method"</span>: <span class="string">"tree-sitter"</span> | <span class="string">"regex"</span>
+}
+
+<span class="comment">// Function chunk (cho RAG search):</span>
+{
+  <span class="string">"name"</span>: <span class="string">"withdraw"</span>, <span class="string">"contract"</span>: <span class="string">"Bank"</span>,
+  <span class="string">"risk_indicators"</span>: [<span class="string">"external call"</span>, <span class="string">"state update"</span>, <span class="string">"no guard"</span>],
+  <span class="string">"has_external_call"</span>: <span class="keyword">true</span>,
+  <span class="string">"has_state_change"</span>: <span class="keyword">true</span>,
+  <span class="string">"priority"</span>: <span class="num">3</span>  <span class="comment">// so risk indicators, de sap xep</span>
+}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2+3 -->
+      <div class="pipeline-step">
+        <div>
+          <div class="step-marker" style="background:linear-gradient(135deg,#8b5cf6,#a855f7);color:white">2+3</div>
+          <div class="step-line" style="background:linear-gradient(to bottom,#8b5cf6,#3b82f6)"></div>
+        </div>
+        <div class="step-content">
+          <h3 style="color:var(--accent2)">BUOC 2 + 3 — Slither & RAG Search (SONG SONG)</h3>
+          <p>Hai buoc logic doc lap, chay dong thoi bang <code>asyncio.gather()</code> de tiet kiem thoi gian. Ket qua hoi tu tai Buoc 4.</p>
+          <div class="parallel-box">
+            <!-- Step 2 -->
+            <div class="parallel-item">
+              <h4 style="color:var(--orange)">BUOC 2: Slither — Phan Tich Tinh</h4>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+                <span class="tag tag-orange">slither_smart_wrapper.py</span>
+                <span class="tag tag-red">7 detectors</span>
+              </div>
+              <ul>
+                <li><strong>Phat hien phien ban:</strong> Doc pragma statement, xac dinh phien ban Solidity</li>
+                <li><strong>Auto solc-select:</strong> Tu dong cai dat va chuyen doi trinh bien dich solc</li>
+                <li><strong>Cross-process lock:</strong> File-based lock dam bao an toan khi multi-worker</li>
+                <li><strong>Strip imports:</strong> Ghi nhan protection (ReentrancyGuard, onlyOwner) TRUOC khi xoa import de bien dich</li>
+                <li><strong>7 Detectors su dung:</strong> reentrancy-eth, reentrancy-no-eth, reentrancy-benign, reentrancy-events, unchecked-send, unchecked-lowlevel, unchecked-transfer</li>
+                <li><strong>Graceful fallback:</strong> Neu Slither loi → tra ve WARNING ro rang (khong phai false "safe")</li>
+              </ul>
+              <div style="margin-top:12px;padding:10px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:0.85rem">
+                <strong>Xu ly protection bi strip:</strong><br>
+                Khi code goc co import @openzeppelin → modifier ReentrancyGuard bi xoa de Slither bien dich → Thong tin nay duoc ghi vao warnings[] de LLM biet code goc co bao ve.
+              </div>
+            </div>
+            <!-- Step 3 -->
+            <div class="parallel-item">
+              <h4 style="color:var(--green)">BUOC 3: RAG — Tim Kiem Tri Thuc</h4>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+                <span class="tag tag-green">smart_rag_system.py</span>
+                <span class="tag tag-cyan">Qdrant DB</span>
+              </div>
+              <ul>
+                <li><strong>Per-function search:</strong> Moi ham rui ro duoc tim kiem rieng trong knowledge base</li>
+                <li><strong>CodeRankEmbed:</strong> Nhung vector 768 chieu, su dung tien to "search_query:" cho truy van</li>
+                <li><strong>Qdrant search:</strong> Cosine similarity, limit = top_k × 3 (du 3 lan cho reranker)</li>
+                <li><strong>Score threshold:</strong> 0.3 (loai bo ket qua cosine similarity thap)</li>
+                <li><strong>Dedup:</strong> Nhom theo (vuln_type, swc_id, source_function, audit_company), giu toi da 2-3 moi nhom</li>
+                <li><strong>Asymmetric embedding:</strong> Document prefix "search_document:", Query prefix "search_query:" — thiet ke co chu dich cua CodeRankEmbed</li>
+              </ul>
+              <div style="margin-top:12px;padding:10px;background:rgba(34,197,94,0.08);border-radius:8px;font-size:0.85rem">
+                <strong>Data flow:</strong><br>
+                Qdrant tra ve toi da 30 ket qua/ham → Cat giu top 10/ham → Gop tat ca N ham → Dedup → Con 10-25 ket qua → Chuyen sang Buoc 4
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="pipeline-step">
+        <div>
+          <div class="step-marker" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:white">4</div>
+          <div class="step-line" style="background:linear-gradient(to bottom,#3b82f6,#ec4899)"></div>
+        </div>
+        <div class="step-content">
+          <h3 style="color:var(--accent)">BUOC 4 — Cross-Encoder Reranking + CRAG Gate</h3>
+          <p>Xep hang lai ket qua RAG bang cross-encoder, sau do ap dung cong CRAG de loc chat luong bang chung truoc khi gui cho LLM.</p>
+
+          <div class="grid-2">
+            <div class="detail-box">
+              <h4>4a. Cross-Encoder Reranking</h4>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+                <span class="tag tag-blue">ms-marco-MiniLM-L-12-v2</span>
+                <span class="tag tag-purple">33M params</span>
+              </div>
+              <ul>
+                <li><strong>Input:</strong> (rerank_query, document_text) pairs</li>
+                <li><strong>rerank_query:</strong> Xay dung tu ham rui ro top-1 (ten ham, risk indicators, 300 ky tu code)</li>
+                <li><strong>Document text:</strong> "Vulnerability: X | Root cause: Y | Code: Z"</li>
+                <li><strong>Scoring:</strong> raw logits → sigmoid → [0, 1]</li>
+                <li><strong>Combined score:</strong> <code>0.4 × bi_encoder + 0.6 × cross_encoder</code></li>
+                <li><strong>Output:</strong> Top 5 ket qua, sap xep theo combined score</li>
+              </ul>
+              <div style="margin-top:10px;padding:10px;background:rgba(59,130,246,0.08);border-radius:8px;font-size:0.83rem">
+                <strong>Tai sao ms-marco cho Solidity?</strong> Vi input cua reranker la van ban mo ta (NL + code), khong phai code thuan tuy. CodeRankEmbed (code-specialized) da loc o buoc 1 (bi-encoder). ms-marco xu ly tot van ban hon hop.
+              </div>
+            </div>
+            <div class="detail-box">
+              <h4>4b. CRAG Gate (Corrective RAG)</h4>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+                <span class="tag tag-orange">Rule-based</span>
+                <span class="tag tag-red">KHONG phai ML</span>
+              </div>
+              <ul>
+                <li><strong>Nguon cam hung:</strong> Yan et al., arXiv:2401.15884</li>
+                <li><strong>3 hanh dong dua tren combined_score:</strong></li>
+              </ul>
+              <table class="styled-table" style="margin-top:10px;font-size:0.85rem">
+                <tr style="background:rgba(34,197,94,0.1)"><td><strong>CORRECT</strong></td><td>score &ge; 0.7</td><td>Gui tat ca 5 ket qua cho LLM</td></tr>
+                <tr style="background:rgba(245,158,11,0.1)"><td><strong>AMBIGUOUS</strong></td><td>0.3 &le; score &lt; 0.7</td><td>Chi gui ket qua co score &ge; 0.3</td></tr>
+                <tr style="background:rgba(239,68,68,0.1)"><td><strong>INCORRECT</strong></td><td>score &lt; 0.3</td><td>KHONG gui bang chung — LLM tu phan doan</td></tr>
+              </table>
+              <div style="margin-top:10px;padding:10px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:0.83rem">
+                <strong>Bi-encoder floor:</strong> Neu CodeRankEmbed score &ge; 0.75 nhung combined &lt; 0.3 → day len AMBIGUOUS (vi CodeRankEmbed hieu code tot hon).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="pipeline-step">
+        <div>
+          <div class="step-marker" style="background:linear-gradient(135deg,#ec4899,#db2777);color:white">5</div>
+          <div class="step-line" style="background:linear-gradient(to bottom,#ec4899,#06b6d4)"></div>
+        </div>
+        <div class="step-content">
+          <h3 style="color:var(--pink)">BUOC 5 — LLM Chain-of-Thought Reasoning</h3>
+          <p>Gui tat ca thong tin (code, Slither warnings, RAG evidence) den Gemini 2.5 Pro. Su dung Prompt Tiering va 14 quy tac chong ao giac.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <span class="tag tag-pink">llm_analyzer.py</span>
+            <span class="tag tag-red">Gemini 2.5 Pro</span>
+            <span class="tag tag-purple">Chain-of-Thought</span>
+          </div>
+
+          <div class="detail-box">
+            <h4>Prompt Tiering — Kien Truc Prompt 2 Tang:</h4>
+            <table class="styled-table" style="font-size:0.88rem">
+              <tr>
+                <th>Tang</th><th>Noi dung</th><th>Khi nao co</th>
+              </tr>
+              <tr>
+                <td><span class="tag tag-blue">Tier 1</span></td>
+                <td>Checklist kiem tra 3 loai lo hong co ban (SWC-107, SWC-101, SWC-104). Yeu cau tra loi YES/NO cho tung loai.</td>
+                <td><strong>Luon co</strong> — moi lan phan tich</td>
+              </tr>
+              <tr>
+                <td><span class="tag tag-purple">Tier 2</span></td>
+                <td>Expert rules tu 458 audit cases: nhan dien safe patterns, calibration muc do nghiem trong, quy tac xac minh exploit.</td>
+                <td><strong>Chi khi RAG co bang chung</strong> — do luong dong gop cua RAG</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="detail-box" style="margin-top:12px">
+            <h4>Cau Truc Prompt Gui Den LLM:</h4>
+            <ul>
+              <li><strong>Phan Slither:</strong> Danh sach canh bao tu Slither (hoac "No vulnerabilities detected" / "SLITHER UNAVAILABLE")</li>
+              <li><strong>Phan RAG:</strong> Top 3 cases tuong tu voi root_cause, trigger_condition, fix_solution</li>
+              <li><strong>Phan Expert Rules (Tier 2):</strong> Safe patterns, severity calibration, exploit verification — CHI KHI co RAG evidence</li>
+              <li><strong>Phan Code:</strong> Toan bo ma nguon can phan tich</li>
+              <li><strong>Phan Checklist (Tier 1):</strong> 3 loai lo hong kiem tra</li>
+              <li><strong>14 Quy tac chong ao giac:</strong> Dam bao LLM khong bao cao sai</li>
+            </ul>
+          </div>
+
+          <div class="detail-box" style="margin-top:12px">
+            <h4>14 Quy Tac Chong Ao Giac (Anti-Hallucination):</h4>
+            <div class="grid-2" style="gap:8px">
+              <ul style="font-size:0.85rem">
+                <li>1. Chi bao cao SWC-107, SWC-101, SWC-104</li>
+                <li>2. .send()/.transfer() ≠ reentrancy (2300 gas)</li>
+                <li>3. Solidity &ge; 0.8.0 → SWC-101 KHONG THE</li>
+                <li>4. ERC20 .transfer() ≠ raw .call()</li>
+                <li>5. Phai cung cap kich ban khai thac cu the</li>
+                <li>6. SafeMath → SWC-101 an toan</li>
+                <li>7. Bounded arithmetic → SWC-101 an toan</li>
+              </ul>
+              <ul style="font-size:0.85rem">
+                <li>8. ReentrancyGuard → SWC-107 an toan</li>
+                <li>9. CEI pattern → SWC-107 an toan</li>
+                <li>10. Return value checked → SWC-104 an toan</li>
+                <li>11. Chi bao cao High/Critical severity</li>
+                <li>12. Primary = nguy hiem nhat; secondary = phu</li>
+                <li>13. Khong bao cao de an toan (precision > recall)</li>
+                <li>14. Slither co false negative cao → verify bang code review</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="detail-box" style="margin-top:12px">
+            <h4>Hau Xu Ly (Post-Processing):</h4>
+            <ul>
+              <li><strong>_filter_out_of_scope():</strong> Loai bo moi SWC khong nam trong {SWC-107, SWC-101, SWC-104}</li>
+              <li><strong>_filter_pragma_080():</strong> Neu Solidity &ge; 0.8.0 → xoa tat ca SWC-101 (vi built-in overflow protection)</li>
+              <li><strong>JSON parsing:</strong> Thu phan tich truc tiep → trich tu markdown block → tim { ... } ngoai cung</li>
+              <li><strong>Retry:</strong> 3-5 lan voi exponential backoff (10s, 20s, 40s) khi gap rate limit</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="pipeline-step">
+        <div>
+          <div class="step-marker" style="background:linear-gradient(135deg,#06b6d4,#0891b2);color:white">6</div>
+        </div>
+        <div class="step-content">
+          <h3 style="color:var(--cyan)">BUOC 6 — Generate Structured Report</h3>
+          <p>Ket hop tat ca ket qua trung gian thanh bao cao JSON hoan chinh, tra ve cho frontend hien thi.</p>
+          <div class="detail-box">
+            <h4>JSON Response Structure:</h4>
+            <div class="code-block">
+{
+  <span class="string">"success"</span>: <span class="keyword">true</span>,
+  <span class="string">"filename"</span>: <span class="string">"Contract.sol"</span>,
+  <span class="string">"pipeline_version"</span>: <span class="string">"6.0-6step"</span>,
+
+  <span class="comment">// Ket qua LLM</span>
+  <span class="string">"ai_analysis_structured"</span>: {
+    <span class="string">"verdict"</span>: <span class="string">"VULNERABLE"</span> | <span class="string">"SAFE"</span>,
+    <span class="string">"confidence"</span>: <span class="string">"HIGH"</span> | <span class="string">"MEDIUM"</span> | <span class="string">"LOW"</span>,
+    <span class="string">"primary_vulnerability"</span>: { type, swc_id, severity, location, description, exploit_scenario, recommendation },
+    <span class="string">"secondary_warnings"</span>: [...],
+    <span class="string">"reasoning"</span>: <span class="string">"Chain-of-Thought analysis..."</span>
+  },
+
+  <span class="comment">// Ket qua RAG</span>
+  <span class="string">"rag_findings"</span>: {
+    <span class="string">"found"</span>: <span class="keyword">true</span>,
+    <span class="string">"crag_action"</span>: <span class="string">"CORRECT"</span>,
+    <span class="string">"similar_cases"</span>: [{ type, swc_id, severity, combined_score, audit_company, ... }],
+    <span class="string">"total_candidates"</span>: <span class="num">25</span>, <span class="string">"top_k_ranked"</span>: <span class="num">5</span>
+  },
+
+  <span class="comment">// Ket qua AST</span>
+  <span class="string">"function_analysis"</span>: { total_functions, risky_functions, functions_analyzed: [...] },
+
+  <span class="comment">// Ket qua Slither</span>
+  <span class="string">"slither_analysis"</span>: { warnings: [...], hints_used: [...], total_warnings },
+
+  <span class="comment">// Metadata LLM</span>
+  <span class="string">"llm_analysis"</span>: { verdict, model: <span class="string">"gemini-2.5-pro"</span>, tokens: { prompt, completion } }
+}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end pipeline-container -->
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
+
+<!-- ===== 4. CONG NGHE ===== -->
+<section id="technologies">
+  <div class="container">
+    <h2 class="section-title">
+      <span class="icon" style="background:rgba(245,158,11,0.15);color:var(--orange)">04</span>
+      Cong Nghe Su Dung
+    </h2>
+    <p class="section-desc">Tong hop tat ca cong nghe, thu vien, framework duoc su dung trong du an.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="color:var(--accent)">Backend — Python 3.11+</h3>
+        <table class="styled-table">
+          <tr><th>Thu vien</th><th>Phien ban</th><th>Vai tro</th></tr>
+          <tr><td>FastAPI</td><td>0.128.0</td><td>REST API framework, async handlers</td></tr>
+          <tr><td>uvicorn</td><td>0.40.0</td><td>ASGI server</td></tr>
+          <tr><td>tree-sitter</td><td>&ge;0.23.0</td><td>AST parser engine</td></tr>
+          <tr><td>tree-sitter-solidity</td><td>&ge;1.2.0</td><td>Solidity grammar cho tree-sitter</td></tr>
+          <tr><td>sentence-transformers</td><td>5.2.0</td><td>CodeRankEmbed + ms-marco models</td></tr>
+          <tr><td>qdrant-client</td><td>&ge;1.7.0</td><td>Vector DB client (local mode)</td></tr>
+          <tr><td>google-genai</td><td>1.0.0</td><td>Gemini 2.5 Pro API SDK</td></tr>
+          <tr><td>numpy</td><td>latest</td><td>Vector operations</td></tr>
+          <tr><td>python-dotenv</td><td>1.2.1</td><td>Environment variables</td></tr>
+          <tr><td>pydantic</td><td>2.12</td><td>Data validation</td></tr>
+          <tr><td>slither-analyzer</td><td>latest</td><td>Solidity static analysis</td></tr>
+          <tr><td>solc-select</td><td>latest</td><td>Solidity compiler manager</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--green)">Frontend — Node.js 18+</h3>
+        <table class="styled-table">
+          <tr><th>Thu vien</th><th>Phien ban</th><th>Vai tro</th></tr>
+          <tr><td>Next.js</td><td>16.1.1</td><td>React framework (App Router)</td></tr>
+          <tr><td>React</td><td>19.2.3</td><td>UI component library</td></tr>
+          <tr><td>TypeScript</td><td>5.x</td><td>Type safety</td></tr>
+          <tr><td>TailwindCSS</td><td>4.x</td><td>Utility-first CSS</td></tr>
+          <tr><td>lucide-react</td><td>0.562.0</td><td>SVG icon library</td></tr>
+          <tr><td>react-markdown</td><td>10.1.0</td><td>Render LLM reasoning</td></tr>
+        </table>
+
+        <h3 style="color:var(--orange);margin-top:24px">Infrastructure & Tools</h3>
+        <table class="styled-table">
+          <tr><th>Tool</th><th>Vai tro</th></tr>
+          <tr><td>Qdrant (local mode)</td><td>Vector DB — SQLite backend, khong can Docker</td></tr>
+          <tr><td>asyncio</td><td>Parallel execution cho Slither + RAG</td></tr>
+          <tr><td>CORS Middleware</td><td>Cross-origin cho localhost:3000 ↔ :8000</td></tr>
+          <tr><td>File Lock</td><td>Cross-process lock cho solc-select</td></tr>
+          <tr><td>Google Cloud</td><td>Vertex AI credentials cho Gemini API</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
+
+<!-- ===== 5. KNOWLEDGE BASE ===== -->
+<section id="knowledgebase">
+  <div class="container">
+    <h2 class="section-title">
+      <span class="icon" style="background:rgba(6,182,212,0.15);color:var(--cyan)">05</span>
+      Co So Tri Thuc (Knowledge Base)
+    </h2>
+    <p class="section-desc">458 mau du lieu tu DAppSCAN (608 bao cao kiem toan chuyen nghiep, 21,457 file Solidity), duoc enriched voi root_cause, trigger_condition, fix_solution.</p>
+
+    <div class="grid-3">
+      <div class="stat-card" style="border-left:4px solid var(--red)">
+        <div class="stat-num" style="color:var(--red)">204</div>
+        <div class="stat-label">SWC-101: Integer Overflow</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--orange)">
+        <div class="stat-num" style="color:var(--orange)">138</div>
+        <div class="stat-label">SWC-107: Reentrancy</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--accent)">
+        <div class="stat-num" style="color:var(--accent)">116</div>
+        <div class="stat-label">SWC-104: Unchecked Return</div>
+      </div>
+    </div>
+
+    <div class="kb-bar" style="margin-top:20px">
+      <div style="width:44.5%;background:var(--red)">SWC-101 (44.5%)</div>
+      <div style="width:30.1%;background:var(--orange)">SWC-107 (30.1%)</div>
+      <div style="width:25.4%;background:var(--accent)">SWC-104 (25.4%)</div>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+      <h3>Quy Trinh Xay Dung Knowledge Base</h3>
+      <div class="arch-diagram" style="padding:24px">
+        <pre>
+  <span style="color:var(--white)">DAppSCAN Dataset</span> (608 bao cao kiem toan, 21,457 file .sol)
+         │
+         ▼
+  [ingest_dappscan.py]  →  Trich xuat metadata tu bao cao audit
+         │
+         ▼
+  [export_kb_v5.py]  →  darkhotel_knowledge_base_v5.json (458 mau)
+         │                 Cac truong: id, swc_id, swc_name, severity,
+         │                 function, line, code_snippet, audit_company
+         ▼
+  [enrich_knowledge_base.py]  →  v6/v7.json (+root_cause, trigger, fix)
+         │
+         ▼
+  [migrate_to_qdrant_v7.py]
+         │  Voi moi mau du lieu:
+         │    1. Tao van ban: "Vulnerability: {swc_name}\n Root Cause: ...\n Code:\n{code}"
+         │    2. Nhung vector: CodeRankEmbed("search_document: " + van_ban) → 768d
+         │    3. Luu vao Qdrant: vector + payload metadata
+         ▼
+  <span style="color:var(--green)">qdrant_db_v7/</span>  (Qdrant local, SQLite backend, 458 points, 768d, Cosine)
+        </pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Cau Truc Moi Mau Du Lieu</h3>
+      <div class="code-block">
+{
+  <span class="string">"id"</span>: <span class="string">"dappscan_SWC107_042"</span>,
+  <span class="string">"swc_id"</span>: <span class="string">"SWC-107"</span>,
+  <span class="string">"swc_name"</span>: <span class="string">"Reentrancy"</span>,
+  <span class="string">"severity"</span>: <span class="string">"High"</span>,
+  <span class="string">"function"</span>: <span class="string">"withdraw"</span>,
+  <span class="string">"line_number"</span>: <span class="num">45</span>,
+  <span class="string">"audit_company"</span>: <span class="string">"Trail of Bits"</span>,
+  <span class="string">"source_file"</span>: <span class="string">"contracts/Bank.sol"</span>,
+  <span class="string">"code_snippet_vulnerable"</span>: <span class="string">"function withdraw() public { ... }"</span>,
+  <span class="string">"root_cause"</span>: <span class="string">"External call before state update (CEI violation)"</span>,
+  <span class="string">"trigger_condition"</span>: <span class="string">"Attacker deploys malicious contract that re-enters withdraw()"</span>,
+  <span class="string">"fix_solution"</span>: <span class="string">"Use Checks-Effects-Interactions pattern or ReentrancyGuard"</span>
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
+
+<!-- ===== 6. MO HINH ===== -->
+<section id="models">
+  <div class="container">
+    <h2 class="section-title">
+      <span class="icon" style="background:rgba(236,72,153,0.15);color:var(--pink)">06</span>
+      Cac Mo Hinh ML/AI Chi Tiet
+    </h2>
+    <p class="section-desc">He thong su dung 4 thanh phan AI/ML, trong do 3 chay cuc bo va 1 goi API.</p>
+
+    <div class="grid-2">
+      <div class="card" style="border-left:4px solid var(--green)">
+        <h3 style="color:var(--green)">CodeRankEmbed — Bi-Encoder</h3>
+        <table class="styled-table" style="font-size:0.88rem">
+          <tr><td style="width:140px;font-weight:600">Model ID</td><td>nomic-ai/CodeRankEmbed</td></tr>
+          <tr><td style="font-weight:600">Kich thuoc</td><td>137M parameters, 768 dimensions</td></tr>
+          <tr><td style="font-weight:600">Cong bo</td><td>ICLR 2025 (Suresh et al., ArXiv:2412.01007)</td></tr>
+          <tr><td style="font-weight:600">Training data</td><td>21M code examples (CoRNStack)</td></tr>
+          <tr><td style="font-weight:600">License</td><td>Apache-2.0</td></tr>
+          <tr><td style="font-weight:600">Chay o dau</td><td>Cuc bo (CPU), ~2GB luu tru</td></tr>
+          <tr><td style="font-weight:600">Vai tro</td><td>Nhung vector cho code Solidity (stage 1 retrieval)</td></tr>
+          <tr><td style="font-weight:600">Dac biet</td><td>Asymmetric embedding — prefix "search_query:" vs "search_document:"</td></tr>
+        </table>
+      </div>
+      <div class="card" style="border-left:4px solid var(--accent2)">
+        <h3 style="color:var(--accent2)">ms-marco-MiniLM — Cross-Encoder</h3>
+        <table class="styled-table" style="font-size:0.88rem">
+          <tr><td style="width:140px;font-weight:600">Model ID</td><td>cross-encoder/ms-marco-MiniLM-L-12-v2</td></tr>
+          <tr><td style="font-weight:600">Kich thuoc</td><td>33M parameters</td></tr>
+          <tr><td style="font-weight:600">Training data</td><td>MS MARCO (information retrieval, English)</td></tr>
+          <tr><td style="font-weight:600">Chay o dau</td><td>Cuc bo (CPU), ~100MB</td></tr>
+          <tr><td style="font-weight:600">Vai tro</td><td>Reranking (stage 2) — tinh diem lien quan giua query va document</td></tr>
+          <tr><td style="font-weight:600">Scoring</td><td>raw logits → sigmoid → combined: 0.4×bi + 0.6×cross</td></tr>
+          <tr><td style="font-weight:600">Trade-off</td><td>Khong chuyen code nhung xu ly tot van ban hon hop (NL + code)</td></tr>
+        </table>
+      </div>
+      <div class="card" style="border-left:4px solid var(--orange)">
+        <h3 style="color:var(--orange)">CRAG Evaluator — Quality Gate</h3>
+        <table class="styled-table" style="font-size:0.88rem">
+          <tr><td style="width:140px;font-weight:600">Loai</td><td>Rule-based (KHONG phai ML model)</td></tr>
+          <tr><td style="font-weight:600">Nguon cam hung</td><td>Yan et al., arXiv:2401.15884</td></tr>
+          <tr><td style="font-weight:600">Logic</td><td>2 nguong co dinh: CORRECT &ge;0.7, INCORRECT &lt;0.3</td></tr>
+          <tr><td style="font-weight:600">Co che an toan</td><td>Bi-encoder floor: CodeRankEmbed &ge;0.75 → khong drop xuong INCORRECT</td></tr>
+          <tr><td style="font-weight:600">Vai tro</td><td>Ngan RAG khong lien quan lam nhieu LLM</td></tr>
+        </table>
+      </div>
+      <div class="card" style="border-left:4px solid var(--pink)">
+        <h3 style="color:var(--pink)">Gemini 2.5 Pro — LLM Reasoning</h3>
+        <table class="styled-table" style="font-size:0.88rem">
+          <tr><td style="width:140px;font-weight:600">Provider</td><td>Google (via GenAI SDK + Vertex AI)</td></tr>
+          <tr><td style="font-weight:600">Kich thuoc</td><td>Khong cong bo</td></tr>
+          <tr><td style="font-weight:600">Chay o dau</td><td>API ben ngoai (Google Cloud)</td></tr>
+          <tr><td style="font-weight:600">Vai tro</td><td>Suy luan Chain-of-Thought, phan doan cuoi cung</td></tr>
+          <tr><td style="font-weight:600">Prompt</td><td>Tiered (Tier 1 always + Tier 2 from RAG only)</td></tr>
+          <tr><td style="font-weight:600">Output</td><td>Strict JSON schema voi verdict, vulnerabilities, reasoning</td></tr>
+          <tr><td style="font-weight:600">Anti-hallucination</td><td>14 quy tac cu the + post-processing filters</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
+
+<!-- ===== 7. 3 LOAI LO HONG ===== -->
+<section id="vulnerabilities">
+  <div class="container">
+    <h2 class="section-title">
+      <span class="icon" style="background:rgba(239,68,68,0.15);color:var(--red)">07</span>
+      3 Loai Lo Hong Muc Tieu (SWC)
+    </h2>
+    <p class="section-desc">He thong tap trung phat hien 3 loai lo hong nghiem trong nhat trong smart contract Solidity.</p>
+
+    <div class="grid-3">
+      <div class="swc-card" style="border-left-color:var(--red)">
+        <h4 style="color:var(--red)">SWC-107 — Reentrancy</h4>
+        <div style="margin:8px 0"><span class="tag tag-red">Critical / High</span> <span class="tag tag-orange">138 cases in KB</span></div>
+        <p><strong>Nguyen nhan goc:</strong> Goi ham ben ngoai (external call) truoc khi cap nhat trang thai (state update). Vi pham mau Checks-Effects-Interactions (CEI).</p>
+        <p style="margin-top:8px"><strong>Kich ban khai thac:</strong> Ke tan cong trien khai hop dong doc hai goi lai ham withdraw() truoc khi so du duoc cap nhat.</p>
+        <p style="margin-top:8px"><strong>Phong chong:</strong></p>
+        <ul class="sub-steps">
+          <li>Su dung ReentrancyGuard / nonReentrant modifier</li>
+          <li>Ap dung mau CEI (Checks-Effects-Interactions)</li>
+          <li>Su dung mutex lock</li>
+          <li>.send()/.transfer() gioi han 2300 gas (an toan)</li>
+        </ul>
+      </div>
+      <div class="swc-card" style="border-left-color:var(--orange)">
+        <h4 style="color:var(--orange)">SWC-101 — Integer Overflow/Underflow</h4>
+        <div style="margin:8px 0"><span class="tag tag-orange">High / Medium</span> <span class="tag tag-red">204 cases in KB</span></div>
+        <p><strong>Nguyen nhan goc:</strong> Phep tinh so hoc khong duoc bao ve tren Solidity &lt; 0.8.0. Bien uint256 tran khi vuot qua gia tri toi da.</p>
+        <p style="margin-top:8px"><strong>Kich ban khai thac:</strong> Ke tan cong gui gia tri lon khien balance + amount tran ve 0.</p>
+        <p style="margin-top:8px"><strong>Phong chong:</strong></p>
+        <ul class="sub-steps">
+          <li>Su dung Solidity &ge; 0.8.0 (built-in overflow protection)</li>
+          <li>Su dung thu vien SafeMath (cho Solidity &lt; 0.8.0)</li>
+          <li>Kiem tra bien truoc phep tinh (bounded arithmetic)</li>
+        </ul>
+        <div style="margin-top:10px;padding:8px;background:rgba(34,197,94,0.1);border-radius:6px;font-size:0.83rem;color:var(--green)">
+          <strong>Luu y:</strong> Solidity &ge; 0.8.0 co bao ve tran so tu dong. Pipeline se TU DONG loai bo SWC-101 neu phat hien pragma &ge; 0.8.0.
+        </div>
+      </div>
+      <div class="swc-card" style="border-left-color:var(--accent)">
+        <h4 style="color:var(--accent)">SWC-104 — Unchecked Call Return Value</h4>
+        <div style="margin:8px 0"><span class="tag tag-blue">High / Medium</span> <span class="tag tag-orange">116 cases in KB</span></div>
+        <p><strong>Nguyen nhan goc:</strong> Goi ham cap thap (.call(), .send()) ma khong kiem tra gia tri tra ve. Neu goi that bai, chuong trinh van tiep tuc.</p>
+        <p style="margin-top:8px"><strong>Kich ban khai thac:</strong> Giao dich chuyen ETH that bai nhung contract van danh dau la da chuyen thanh cong.</p>
+        <p style="margin-top:8px"><strong>Phong chong:</strong></p>
+        <ul class="sub-steps">
+          <li>Dung require() kiem tra gia tri tra ve</li>
+          <li>Dung if() guard de xu ly loi</li>
+          <li>Su dung .transfer() (tu dong revert khi that bai)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
+
+<!-- ===== 8. FRONTEND ===== -->
+<section id="frontend">
+  <div class="container">
+    <h2 class="section-title">
+      <span class="icon" style="background:rgba(6,182,212,0.15);color:var(--cyan)">08</span>
+      Giao Dien Frontend
+    </h2>
+    <p class="section-desc">Giao dien web su dung Next.js 16 + React 19 + TailwindCSS 4, dark theme, voi pipeline status tracker va hien thi ket qua chi tiet.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Cot Trai — Upload & Pipeline Status</h3>
+        <ul class="sub-steps">
+          <li>Khu vuc upload file drag-and-drop</li>
+          <li>Nut "Scan Vulnerabilities" bat dau phan tich</li>
+          <li>Pipeline status tracker (6 buoc voi icon)</li>
+          <li>Hien thi thoi gian chay (elapsed time)</li>
+          <li>Progress indicators voi adaptive step durations</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Cot Phai — Ket Qua Phan Tich</h3>
+        <ul class="sub-steps">
+          <li><strong>Verdict Banner:</strong> Xanh la (SAFE) hoac Do (VULNERABLE) — confidence level, loai lo hong chinh</li>
+          <li><strong>Primary Vulnerability Card:</strong> Type, SWC ID, Severity, Location, Description, Exploit Scenario, Recommendation</li>
+          <li><strong>Secondary Warnings:</strong> Danh sach thu gon</li>
+          <li><strong>Slither Analysis:</strong> Bang canh bao, ma mau theo severity</li>
+          <li><strong>RAG Knowledge Base:</strong> Similar cases, CRAG action, relevance scores</li>
+          <li><strong>AI Reasoning:</strong> Chain-of-Thought hien thi dang Markdown</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>Cong Nghe Frontend</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="tag tag-blue">Next.js 16.1.1</span>
+        <span class="tag tag-cyan">React 19.2.3</span>
+        <span class="tag tag-purple">TypeScript 5</span>
+        <span class="tag tag-green">TailwindCSS 4</span>
+        <span class="tag tag-orange">lucide-react 0.562</span>
+        <span class="tag tag-pink">react-markdown 10.1</span>
+        <span class="tag tag-red">Dark Theme (#0a0e1a)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
+
+<!-- ===== 9. KET QUA DANH GIA ===== -->
+<section id="evaluation">
+  <div class="container">
+    <h2 class="section-title">
+      <span class="icon" style="background:rgba(34,197,94,0.15);color:var(--green)">09</span>
+      Ket Qua Danh Gia (Evaluation)
+    </h2>
+    <p class="section-desc">He thong duoc danh gia tren nhieu dataset khac nhau de do luong recall, precision, va false positive rate.</p>
+
+    <!-- SmartBugs -->
+    <div class="card">
+      <h3 style="color:var(--green)">SmartBugs-Curated Dataset — 98 Vulnerable Contracts</h3>
+      <div class="grid-4" style="margin:16px 0">
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--green)">100%</div>
+          <div class="stat-label">Recall (97/97)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--accent)">98.97%</div>
+          <div class="stat-label">Type Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--orange)">97</div>
+          <div class="stat-label">Contracts Evaluated</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--accent2)">0</div>
+          <div class="stat-label">False Negatives</div>
+        </div>
+      </div>
+
+      <h4 style="margin:12px 0 8px">Recall Theo Loai SWC:</h4>
+      <div class="metric-row">
+        <div class="metric-label">SWC-107 Reentrancy</div>
+        <div class="metric-bar-bg">
+          <div class="metric-bar" style="width:96.77%;background:linear-gradient(90deg,var(--orange),var(--red))">96.77% (30/31)</div>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-label">SWC-101 Integer Overflow</div>
+        <div class="metric-bar-bg">
+          <div class="metric-bar" style="width:100%;background:linear-gradient(90deg,var(--green),#16a34a)">100% (15/15)</div>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-label">SWC-104 Unchecked Return</div>
+        <div class="metric-bar-bg">
+          <div class="metric-bar" style="width:100%;background:linear-gradient(90deg,var(--accent),#2563eb)">100% (51/51)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top 10 Reentrancy -->
+    <div class="card">
+      <h3 style="color:var(--orange)">Top 10 Reentrancy Contracts</h3>
+      <div class="grid-3" style="margin:12px 0">
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--green)">100%</div>
+          <div class="stat-label">Recall (10/10)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--accent)">100%</div>
+          <div class="stat-label">Type Match Rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="color:var(--accent2)">0</div>
+          <div class="stat-label">False Positives / Negatives</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evaluation datasets summary -->
+    <div class="card">
+      <h3>Tong Hop Cac Dataset Danh Gia</h3>
+      <table class="styled-table">
+        <tr>
+          <th>Dataset</th><th>So luong</th><th>Muc dich</th><th>Script</th>
+        </tr>
+        <tr>
+          <td><span class="tag tag-red">SmartBugs-Curated</span></td>
+          <td>98 contracts</td>
+          <td>Do Recall — tat ca deu co lo hong (SWC-107/101/104)</td>
+          <td>run_smartbugs_eval.py</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-green">Safe Contracts</span></td>
+          <td>23 contracts</td>
+          <td>Do False Positive Rate — tat ca deu AN TOAN</td>
+          <td>run_safe_contracts_eval.py</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-blue">GPTScan Top200</span></td>
+          <td>225 contracts</td>
+          <td>Do FPR tren contracts production thuc te</td>
+          <td>run_top200_eval.py</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-orange">Top 10 Reentrancy</span></td>
+          <td>10 contracts</td>
+          <td>Kiem tra chuyen sau cho reentrancy</td>
+          <td>run_top10_reentrancy_eval.py</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag-purple">Ablation (LLM-only)</span></td>
+          <td>Nhieu dataset</td>
+          <td>Do luong dong gop cua RAG/Slither — LLM khong co RAG</td>
+          <td>run_ablation_*.py</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Cac Metric Danh Gia</h3>
+      <div class="grid-2">
+        <div>
+          <table class="styled-table" style="font-size:0.88rem">
+            <tr><th>Metric</th><th>Cong thuc</th><th>Y nghia</th></tr>
+            <tr><td><strong>Recall</strong></td><td>TP / (TP + FN)</td><td>Ty le phat hien (khong bo sot)</td></tr>
+            <tr><td><strong>Precision</strong></td><td>TP / (TP + FP)</td><td>Do chinh xac khi flag vulnerable</td></tr>
+            <tr><td><strong>F1-Score</strong></td><td>2×P×R / (P+R)</td><td>Trung binh dieu hoa Precision & Recall</td></tr>
+            <tr><td><strong>Specificity</strong></td><td>TN / (TN + FP)</td><td>Ty le nhan dung an toan</td></tr>
+            <tr><td><strong>FPR</strong></td><td>FP / (FP + TN)</td><td>Ty le bao dong sai</td></tr>
+          </table>
+        </div>
+        <div>
+          <div class="highlight">
+            <strong>Thiet ke uu tien Precision > Recall:</strong><br>
+            Pipeline duoc thiet ke de KHONG bao cao sai (it false positive). 14 quy tac anti-hallucination + CRAG gate + post-processing filters deu huong toi giam FP. Tinh nang nay giup nguoi dung tin tuong ket qua phan tich.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="divider"></div></div>
+
+<!-- ===== 10. CAU TRUC THU MUC ===== -->
+<section id="files">
+  <div class="container">
+    <h2 class="section-title">
+      <span class="icon" style="background:rgba(139,92,246,0.15);color:var(--accent2)">10</span>
+      Cau Truc Thu Muc & Files
+    </h2>
+    <p class="section-desc">Tong quan ve cau truc du an va vai tro cua tung file.</p>
+
+    <div class="card">
+      <div class="code-block" style="font-size:0.84rem;line-height:1.8">
+<span style="color:var(--white);font-weight:700">DarkHotel-Capstone/</span>
+├── <span style="color:var(--accent)">backend/</span>                              <span class="comment"># Python backend (FastAPI)</span>
+│   ├── <span style="color:var(--cyan)">main.py</span>                           <span class="comment"># API server + pipeline 6 buoc (20.3 KB)</span>
+│   ├── <span style="color:var(--cyan)">ast_parser.py</span>                     <span class="comment"># Buoc 1: AST parsing (37.6 KB)</span>
+│   ├── <span style="color:var(--cyan)">slither_smart_wrapper.py</span>          <span class="comment"># Buoc 2: Static analysis (26.4 KB)</span>
+│   ├── <span style="color:var(--cyan)">smart_rag_system.py</span>               <span class="comment"># Buoc 3+4: RAG + Rerank + CRAG (14.5 KB)</span>
+│   ├── <span style="color:var(--cyan)">llm_analyzer.py</span>                   <span class="comment"># Buoc 5: LLM reasoning (27 KB)</span>
+│   ├── <span style="color:var(--green)">migrate_to_qdrant_v7.py</span>          <span class="comment"># Script: xay dung Qdrant DB (chay 1 lan)</span>
+│   ├── <span style="color:var(--orange)">darkhotel_knowledge_base_v7.json</span> <span class="comment"># 458 mau audit (~900 KB)</span>
+│   ├── <span style="color:var(--orange)">qdrant_db_v7/</span>                    <span class="comment"># Vector DB (Qdrant, ~3.9 MB)</span>
+│   ├── requirements.txt                  <span class="comment"># Python dependencies</span>
+│   └── .env.example                      <span class="comment"># Mau cau hinh</span>
+│
+├── <span style="color:var(--green)">frontend/</span>                             <span class="comment"># Next.js frontend</span>
+│   ├── app/
+│   │   ├── <span style="color:var(--cyan)">page.tsx</span>                      <span class="comment"># Trang chinh (~27 KB)</span>
+│   │   ├── layout.tsx                    <span class="comment"># Root layout + metadata</span>
+│   │   └── globals.css                   <span class="comment"># TailwindCSS styles</span>
+│   ├── package.json                      <span class="comment"># Dependencies</span>
+│   └── next.config.ts                    <span class="comment"># Next.js config</span>
+│
+├── <span style="color:var(--accent2)">evaluation/</span>                           <span class="comment"># Benchmarking & evaluation</span>
+│   ├── run_smartbugs_eval.py             <span class="comment"># Eval SmartBugs (98 contracts)</span>
+│   ├── run_top200_eval.py                <span class="comment"># Eval GPTScan Top200 (225 contracts)</span>
+│   ├── run_safe_contracts_eval.py        <span class="comment"># Eval safe contracts (23 contracts)</span>
+│   ├── run_top10_reentrancy_eval.py      <span class="comment"># Eval reentrancy (10 contracts)</span>
+│   ├── run_ablation_*.py                 <span class="comment"># Ablation studies (LLM-only)</span>
+│   ├── analyze_smartbugs_metrics.py      <span class="comment"># Tinh Precision/Recall/F1</span>
+│   ├── external_datasets/                <span class="comment"># SmartBugs, safe_contracts, top_10</span>
+│   └── *.json                            <span class="comment"># Ket qua danh gia</span>
+│
+├── <span style="color:var(--pink)">docs/</span>                                 <span class="comment"># Tai lieu</span>
+│   ├── SETUP.md                          <span class="comment"># Huong dan cai dat</span>
+│   └── DEBUGGING.md                      <span class="comment"># Huong dan debug</span>
+│
+├── README.md                             <span class="comment"># README chinh</span>
+├── WORKFLOW_V6.md                        <span class="comment"># Pipeline v6 chi tiet</span>
+└── START_FRONTEND.bat                    <span class="comment"># Khoi dong frontend (Windows)</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>File Sizes & Complexity</h3>
+      <table class="styled-table">
+        <tr><th>File</th><th>Kich thuoc</th><th>Vai tro trong Pipeline</th></tr>
+        <tr><td>ast_parser.py</td><td>37.6 KB (~1000+ dong)</td><td>Buoc 1 — Parsing lon nhat vi ho tro tree-sitter + regex + risk detection</td></tr>
+        <tr><td>llm_analyzer.py</td><td>27 KB</td><td>Buoc 5 — Prompt engineering phuc tap voi tiering + 14 rules</td></tr>
+        <tr><td>slither_smart_wrapper.py</td><td>26.4 KB</td><td>Buoc 2 — Cross-process lock + auto solc + import stripping</td></tr>
+        <tr><td>main.py</td><td>20.3 KB</td><td>Orchestrator — dieu phoi pipeline + API endpoints</td></tr>
+        <tr><td>smart_rag_system.py</td><td>14.5 KB</td><td>Buoc 3+4 — Embedding + Search + Rerank + CRAG</td></tr>
+        <tr><td>page.tsx</td><td>~27 KB</td><td>Frontend — toan bo giao dien trong 1 file component</td></tr>
+        <tr><td>knowledge_base_v7.json</td><td>~900 KB</td><td>458 mau du lieu audit enriched</td></tr>
+        <tr><td>qdrant_db_v7/</td><td>~3.9 MB</td><td>Vector DB indexed (SQLite backend)</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    <p style="font-size:1.1rem;font-weight:700;color:var(--white);margin-bottom:8px">DarkHotel Capstone Project</p>
+    <p>AI-Powered Solidity Smart Contract Vulnerability Detection</p>
+    <p style="margin-top:8px">Pipeline v6.0 — 6-Step Sequential Architecture</p>
+    <p style="margin-top:16px;font-size:0.82rem;color:#64748b">
+      Stack: FastAPI + tree-sitter + Slither + CodeRankEmbed + Qdrant + ms-marco + CRAG + Gemini 2.5 Pro + Next.js 16 + React 19 + TailwindCSS 4
+    </p>
+    <p style="margin-top:8px;font-size:0.82rem;color:#475569">
+      Bao cao duoc tao tu dong dua tren phan tich source code — 2026
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
