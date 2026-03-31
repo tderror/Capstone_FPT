@@ -117,7 +117,7 @@ def main():
                 "line_number": entry.get("line", ""),
                 "audit_company": entry.get("audit_company", ""),
                 "source_file": entry.get("source_file", ""),
-                "code_snippet_vulnerable": entry.get("code_snippet_vulnerable", "")[:500],
+                "code_snippet_vulnerable": entry.get("code_snippet_vulnerable", "")[:2000],
                 "root_cause": entry.get("root_cause", ""),
                 "trigger_condition": entry.get("trigger_condition", ""),
                 "fix_solution": entry.get("fix_solution", ""),

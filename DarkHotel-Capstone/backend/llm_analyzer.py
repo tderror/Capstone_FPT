@@ -474,9 +474,9 @@ Slither warnings: {slither_warnings}
         print(f"Prompt length: {len(prompt)} characters")
         print("=" * 40)
 
-        # System message prefix
-        system_prefix = "You are an expert blockchain security auditor. Output ONLY valid JSON.\n\n"
-        full_prompt = system_prefix + prompt
+        # No system prefix needed — role is already defined in the prompt itself.
+        # Adding "Output ONLY valid JSON" as a short reminder at the top.
+        full_prompt = "IMPORTANT: Output ONLY valid JSON — no markdown, no commentary.\n\n" + prompt
 
         # Retry logic with exponential backoff
         for attempt in range(self.max_retries):

@@ -4,7 +4,7 @@ Smart RAG System v6 - DarkHotel
 Knowledge-level RAG with:
 - CodeRankEmbed (nomic-ai, 137M, 768d) for code embedding
 - Qdrant (local mode) for vector search
-- ms-marco-MiniLM-L-6-v2 cross-encoder for reranking
+- ms-marco-MiniLM-L-12-v2 cross-encoder for reranking
 - CRAG (Corrective RAG) evaluator for retrieval quality gating
 """
 
@@ -61,16 +61,17 @@ class CodeRankEmbeddings:
 
 
 # =============================================================================
-# CROSS-ENCODER RERANKER: ms-marco-MiniLM-L-6-v2
+# CROSS-ENCODER RERANKER: ms-marco-MiniLM-L-12-v2
 # =============================================================================
 
 class RelevanceReranker:
     """
-    Cross-encoder reranker using ms-marco-MiniLM-L-6-v2 (22M params).
+    Cross-encoder reranker using ms-marco-MiniLM-L-12-v2 (33M params).
     Scores (query, document) pairs jointly for fine-grained relevance.
+    L-12 provides better accuracy than L-6 with minimal latency increase.
     """
 
-    def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
+    def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-12-v2"):
         self.cross_encoder = CrossEncoder(model_name)
 
     def rerank(self, query: str, candidates: List[Dict], top_k: int = 5) -> List[Dict]:
@@ -215,13 +216,13 @@ class SmartRAGSystem:
     Components:
     - CodeRankEmbed (137M, 768d) for code-specialized embedding
     - Qdrant (local mode) for vector similarity search with metadata filtering
-    - ms-marco-MiniLM cross-encoder for reranking
+    - ms-marco-MiniLM-L-12 cross-encoder for reranking
     - CRAG evaluator for retrieval quality gating
 
     v6 Updates:
     - Replaced UniXcoder with CodeRankEmbed (ICLR 2025)
     - Replaced ChromaDB with Qdrant local mode
-    - Added cross-encoder reranking (ms-marco-MiniLM-L-6-v2)
+    - Added cross-encoder reranking (ms-marco-MiniLM-L-12-v2)
     - Added CRAG evaluator (Correct/Ambiguous/Incorrect actions)
     - Knowledge-enriched KB with root_cause, trigger_condition, fix_solution
     """
@@ -230,7 +231,7 @@ class SmartRAGSystem:
         print(f"[SmartRAG v6] Initializing...")
 
         self.persist_directory = persist_directory
-        self.kb_version = "v6"
+        self.kb_version = "v7"
 
         # 1. CodeRankEmbed embedding model
         print(f"[SmartRAG v6] Loading CodeRankEmbed embedding model...")
@@ -245,7 +246,7 @@ class SmartRAGSystem:
         if COLLECTION_NAME in collections:
             info = self.qdrant.get_collection(COLLECTION_NAME)
             self.total_entries = info.points_count
-            self.kb_version = "v6-knowledge-enriched"
+            self.kb_version = "v7-knowledge-enriched"
             print(f"[SmartRAG v6] KB Connected: {self.total_entries} entries")
         else:
             self.total_entries = 0
@@ -275,7 +276,7 @@ class SmartRAGSystem:
             "source": "DAppSCAN (608 professional audits, v7-quality-fixed)",
             "embedding": "CodeRankEmbed (nomic-ai, 768d)",
             "vector_db": "Qdrant (local mode)",
-            "reranker": "ms-marco-MiniLM-L-6-v2",
+            "reranker": "ms-marco-MiniLM-L-12-v2",
             "crag": "Cross-encoder CRAG evaluator",
         }
 
@@ -350,8 +351,6 @@ class SmartRAGSystem:
         except Exception as e:
             print(f"[SmartRAG v6] Search error: {e}")
             return []
-
-
 
 
 if __name__ == "__main__":

@@ -47,7 +47,7 @@ class FileLock:
 
     def acquire(self):
         self._thread_lock.acquire()
-        start = time.monotonic()
+        start = time.time()
         while True:
             try:
                 # O_CREAT | O_EXCL: atomic create-or-fail (cross-process safe)
@@ -59,7 +59,7 @@ class FileLock:
             except FileExistsError:
                 # Check if lock is stale (older than timeout)
                 try:
-                    lock_age = time.monotonic() - os.path.getmtime(self.lock_path)
+                    lock_age = time.time() - os.path.getmtime(self.lock_path)
                     if lock_age > self.timeout:
                         # Stale lock, remove and retry
                         try:
@@ -70,7 +70,7 @@ class FileLock:
                 except OSError:
                     pass
 
-                if time.monotonic() - start > self.timeout:
+                if time.time() - start > self.timeout:
                     self._thread_lock.release()
                     raise TimeoutError(f"Could not acquire solc lock after {self.timeout}s")
                 time.sleep(self.poll_interval)

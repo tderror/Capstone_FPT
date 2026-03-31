@@ -25,7 +25,7 @@
                                +------v------+
                                |CrossEncoder |
                                | ms-marco    |
-                               | (22M, rerank|
+                               | (33M, rerank|
                                |  + CRAG)    |
                                +-------------+
 ```
@@ -35,7 +35,7 @@
 > | Thành phần | Vai trò | Kích thước | Chạy ở đâu |
 > |---|---|---|---|
 > | **CodeRankEmbed** | Nhúng vector (bi-encoder) | 137M tham số, 768 chiều | Cục bộ (CPU/GPU) |
-> | **CrossEncoder** (ms-marco-MiniLM) | Xếp hạng lại (reranker) | 22M tham số | Cục bộ (CPU/GPU) |
+> | **CrossEncoder** (ms-marco-MiniLM) | Xếp hạng lại (reranker) | 33M tham số | Cục bộ (CPU/GPU) |
 > | **CRAGEvaluator** | Cổng chất lượng RAG | Rule-based (không phải ML) | Cục bộ |
 > | **Gemini 2.5 Pro** | Suy luận & phán đoán | Không công bố | API bên ngoài (Google) |
 >
@@ -76,7 +76,8 @@ Bộ dữ liệu DAppSCAN (608 báo cáo kiểm toán, 21.457 file .sol)
         |    3. Đưa vào Qdrant:
         |       vector: mảng 768 số thực
         |       payload: {swc_id, swc_name, severity, function, line_number,
-        |                 audit_company, source_file, code_snippet_vulnerable,
+        |                 audit_company, source_file,
+        |                 code_snippet_vulnerable (tối đa 2000 ký tự),
         |                 root_cause, trigger_condition, fix_solution}
         v
 qdrant_db_v7/  (Qdrant chế độ cục bộ, backend SQLite)
@@ -132,8 +133,8 @@ qdrant_db_v7/  (Qdrant chế độ cục bộ, backend SQLite)
    |       |       Đọc points_count = 458
    |       |
    |       +---> RelevanceReranker()  — Bộ xếp hạng lại
-   |       |       Nạp CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
-   |       |       22 triệu tham số, ~100MB
+   |       |       Nạp CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
+   |       |       33 triệu tham số, ~100MB
    |       |
    |       +---> CRAGEvaluator()  — Bộ đánh giá CRAG (rule-based, KHÔNG PHẢI model ML)
    |               Chỉ dùng 2 ngưỡng cố định: ĐÚNG >= 0.7, SAI < 0.3
@@ -219,7 +220,9 @@ slither.get_warnings_for_ai(code_text)
    |         - Xóa import + kế thừa để biên dịch được
    |
    +---> Ghi file .sol tạm thời
-   +---> KHÓA (threading) ──> solc-select use {phiên_bản}
+   +---> KHÓA (threading + file lock liên tiến trình) ──> solc-select use {phiên_bản}
+   |       📝 File lock dùng time.time() (wall-clock) thay vì time.monotonic()
+   |       vì so sánh với os.path.getmtime() (cũng wall-clock) để phát hiện khóa cũ.
    +---> Chạy: slither temp.sol --json output.json
    +---> Phân tích kết quả JSON
    |
@@ -328,20 +331,50 @@ unique_candidates: [10-25 kết quả đã loại trùng]
 unique_candidates (từ Bước 3, sau khi loại trùng)
    |
    v
+=== XÂY DỰNG RERANK QUERY (trước khi gọi cross-encoder) ===
+
+_infer_filter_type(code):
+   - .call{value:} hoặc .call.value()  →  "Reentrancy"
+   - .send() hoặc .call()              →  "UncheckedReturnValue"
+   - Phép tính (+,-,*) không SafeMath
+     + pragma < 0.8.0                  →  "IntegerUO"
+   - Không khớp mẫu nào               →  None
+
+NẾU có hàm rủi ro:
+   Chỉ dùng hàm rủi ro ĐẦU TIÊN (top 1) để tạo rerank query.
+   📝 ms-marco cross-encoder được huấn luyện trên truy vấn NL ngắn (~20-50 token).
+      Ghép nhiều hàm làm giảm chất lượng xếp hạng lại.
+
+   rerank_query = (
+     "Solidity vulnerability in function {func.name} "
+     "of contract {func.contract}. "
+     "Risk: {indicators}.{vuln_hint}{slither_context} "
+     "Code: {func.code[:300]}"
+   )
+
+NGƯỢC LẠI (không có hàm rủi ro):
+   rerank_query = (
+     "Smart contract security vulnerability in Solidity. "
+     "Risk: general audit.{slither_context} "
+     "Code: {code_text[:500]}"
+   )
+
+   |
+   v
 === 4a: XẾP HẠNG LẠI BẰNG CROSS-ENCODER ===
 
-smart_rag.reranker.rerank(query=code_text[:2000], candidates, top_k=5)
+smart_rag.reranker.rerank(query=rerank_query[:2000], candidates, top_k=5)
    |
    +---> Với mỗi ứng viên:
    |       Tạo doc_text: "Vulnerability: {loại} | Root cause: {nguyên_nhân} | Code: {đoạn_mã}"
    |       Tạo cặp: (query[:2000], doc_text[:2000])
    |
    +---> CrossEncoder.predict(các_cặp)
-   |       Mô hình: ms-marco-MiniLM-L-6-v2 (22 triệu tham số)
+   |       Mô hình: ms-marco-MiniLM-L-12-v2 (33 triệu tham số)
    |       Đầu ra: điểm liên quan thô (không giới hạn)
    |
    |       📝 Tại sao dùng ms-marco cho code Solidity?
-   |       ms-marco-MiniLM-L-6-v2 được huấn luyện trên MS MARCO (tìm kiếm web
+   |       ms-marco-MiniLM-L-12-v2 được huấn luyện trên MS MARCO (tìm kiếm web
    |       tiếng Anh), KHÔNG phải trên mã nguồn. Đây là một trade-off có chủ đích:
    |
    |       **Lý do chọn ms-marco thay vì cross-encoder chuyên code:**
@@ -354,7 +387,7 @@ smart_rag.reranker.rerank(query=code_text[:2000], candidates, top_k=5)
    |          CodeRankEmbed (chuyên code, ICLR 2025) đã lọc trước ở stage 1.
    |       3. Hiện chưa có cross-encoder nào được huấn luyện chuyên cho Solidity
    |          hoặc smart contract security. ms-marco là lựa chọn phổ biến nhất
-   |          cho reranking, nhỏ (22M), nhanh, và hoạt động tốt trên text hỗn hợp.
+   |          cho reranking, nhỏ (33M), nhanh, và hoạt động tốt trên text hỗn hợp.
    |
    |       **Hạn chế đã biết:** ms-marco có thể không tối ưu cho các đoạn code
    |       thuần túy không có mô tả tiếng Anh. Tuy nhiên, vì document text luôn
@@ -465,8 +498,11 @@ create_advanced_prompt():
    v
 === GỬI ĐẾN GEMINI 2.5 PRO ===
 
+Thêm tiền tố JSON-only (không dùng system role — vai trò đã định nghĩa trong prompt):
+  full_prompt = "IMPORTANT: Output ONLY valid JSON — no markdown, no commentary.\n\n" + prompt
+
 Google GenAI SDK:
-  client.models.generate_content(model="gemini-2.5-pro", contents=prompt)
+  client.models.generate_content(model="gemini-2.5-pro", contents=full_prompt)
   Thử lại: 3 lần với thời gian tăng dần (10s, 20s, 40s)
    |
    v
@@ -533,7 +569,7 @@ Kết hợp tất cả kết quả thành phản hồi JSON:
     ],
     total_candidates: 25,
     top_k_ranked: 5,
-    version: "v6.0-qdrant-coderankembed"
+    version: "v7.0-qdrant-coderankembed"
   },
 
   function_analysis: {
@@ -704,7 +740,7 @@ DarkHotel-Capstone/
 | Phân tích tĩnh      | Slither + solc-select                             |
 | Nhúng vector        | CodeRankEmbed (nomic-ai, 137M, 768d, ICLR 2025)  |
 | Cơ sở dữ liệu vector| Qdrant chế độ cục bộ (không cần Docker)           |
-| Xếp hạng lại       | ms-marco-MiniLM-L-6-v2 (22M, cross-encoder)      |
+| Xếp hạng lại       | ms-marco-MiniLM-L-12-v2 (33M, cross-encoder)     |
 | Cổng CRAG           | Rule-based, ngưỡng cross-encoder (0.7/0.3)       |
 | Mô hình ngôn ngữ   | Gemini 2.5 Pro (Google GenAI SDK)                 |
 | Cơ sở tri thức      | 458 mẫu từ DAppSCAN (608 báo cáo kiểm toán)     |

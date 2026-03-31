@@ -201,7 +201,7 @@ DarkHotel-Capstone/
 | Static Analyzer | Slither |
 | Vector Database | Qdrant (local mode) |
 | Embeddings | CodeRankEmbed (nomic-ai, 768d, ICLR 2025) |
-| Reranker | ms-marco-MiniLM-L-6-v2 (cross-encoder) |
+| Reranker | ms-marco-MiniLM-L-12-v2 (cross-encoder) |
 | RAG Quality Gate | CRAG Evaluator (rule-based) |
 | LLM | Gemini 2.5 Pro |
 | Python | 3.10+ |
@@ -287,7 +287,7 @@ MIT License
 **Last Updated:** 2026-03-24
 **Knowledge Base:** 458 DAppSCAN entries (enriched v7, 29 security teams, 608 audits)
 **Embedding:** CodeRankEmbed (nomic-ai, 768d, ICLR 2025)
-**Reranker:** ms-marco-MiniLM-L-6-v2 (cross-encoder)
+**Reranker:** ms-marco-MiniLM-L-12-v2 (cross-encoder)
 **Vector DB:** Qdrant (local mode)
 **Detection:** Reentrancy (SWC-107), Integer Overflow (SWC-101), Unchecked Return Value (SWC-104)
 

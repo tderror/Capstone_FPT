@@ -18,7 +18,7 @@ Upload .sol
     |
     v
 [4] Cross-Encoder Reranking + CRAG Gate
-    |  ms-marco-MiniLM-L-6-v2 reranking
+    |  ms-marco-MiniLM-L-12-v2 reranking
     |  CRAG: CORRECT (>=0.7) -> full evidence
     |        AMBIGUOUS (0.3-0.7) -> filtered evidence
     |        INCORRECT (<0.3) -> no evidence (LLM-only mode)
@@ -41,7 +41,7 @@ Upload .sol
 
 - **CodeRankEmbed**: nomic-ai, 768d, ICLR 2025 embedding model for code
 - **Qdrant**: Local vector database (no Docker required)
-- **Cross-Encoder Reranking**: ms-marco-MiniLM-L-6-v2 for precise relevance scoring
+- **Cross-Encoder Reranking**: ms-marco-MiniLM-L-12-v2 for precise relevance scoring
 - **CRAG Gate**: Rule-based Corrective RAG evaluator (Correct/Ambiguous/Incorrect)
 - **14 anti-hallucination rules**: Strict SWC type filtering in LLM prompt
 - **Parallel execution**: Slither + RAG chay dong thoi (asyncio.gather)
@@ -57,7 +57,7 @@ Upload .sol
 | Static Analyzer | Slither (auto solc install) |
 | Vector Database | Qdrant (local mode) |
 | Embeddings | CodeRankEmbed (nomic-ai, 768d) |
-| Reranker | ms-marco-MiniLM-L-6-v2 (cross-encoder) |
+| Reranker | ms-marco-MiniLM-L-12-v2 (cross-encoder) |
 | RAG Quality Gate | CRAG Evaluator (rule-based) |
 | LLM | Gemini 2.5 Pro |
 | Python | 3.10+ |
@@ -228,6 +228,6 @@ python migrate_to_qdrant_v7.py
 **Last Updated**: 2026-03-24
 **Knowledge Base**: 458 DAppSCAN entries (enriched v7, 29 security teams, 608 audits)
 **Embedding**: CodeRankEmbed (nomic-ai, 768d, ICLR 2025)
-**Reranker**: ms-marco-MiniLM-L-6-v2 (cross-encoder)
+**Reranker**: ms-marco-MiniLM-L-12-v2 (cross-encoder)
 **Vector DB**: Qdrant (local mode)
 **Detection**: Reentrancy (SWC-107), Integer Overflow (SWC-101), Unchecked Return Value (SWC-104)

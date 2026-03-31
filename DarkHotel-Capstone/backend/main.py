@@ -19,7 +19,7 @@ def _infer_filter_type(code: str) -> str:
     """Infer the most likely vulnerability type from Solidity code patterns.
 
     Used to pass metadata filter to Qdrant, reducing noise in retrieval results.
-    Returns: "Reentrancy" | "UncheckedReturnValue" | None
+    Returns: "Reentrancy" | "UncheckedReturnValue" | "IntegerUO" | None
     """
     # .call{value:} or .call.value() → classic reentrancy pattern
     if re.search(r'\.call\{value:', code) or re.search(r'\.call\.value', code):
@@ -27,6 +27,12 @@ def _infer_filter_type(code: str) -> str:
     # .send() or bare .call() without value → unchecked return value
     if re.search(r'\.send\(', code) or re.search(r'\.call\(', code):
         return "UncheckedReturnValue"
+    # Arithmetic operations without SafeMath on Solidity < 0.8 → integer overflow
+    # Detect: +, -, *, ** on uint/int variables without SafeMath
+    has_arithmetic = re.search(r'[\+\-\*](?!=)', code) and not re.search(r'SafeMath', code)
+    is_pre_08 = re.search(r'pragma\s+solidity\s+[\^~>=<]*0\.[4-7]\.', code)
+    if has_arithmetic and is_pre_08:
+        return "IntegerUO"
     return None
 
 
@@ -245,21 +251,19 @@ async def analyze_contract(file: UploadFile = File(...)):
             slither_context = f" Slither detected: {', '.join(slither_vuln_types)}."
 
         if risky_functions:
-            rerank_parts = []
-            for func in risky_functions[:3]:  # Top 3 risky functions
-                indicators = ", ".join(func.get('risk_indicators', []))
-                inferred_type = _infer_filter_type(func.get('code', ''))
-                vuln_hint = f" Suspected: {inferred_type}." if inferred_type else ""
-                rerank_parts.append(
-                    f"Smart contract security vulnerability in Solidity function "
-                    f"{func['name']} of contract {func['contract']}. "
-                    f"Risk indicators: {indicators}.{vuln_hint}{slither_context} "
-                    f"This function involves external calls and state modifications "
-                    f"that may lead to reentrancy, unchecked return values, or "
-                    f"integer overflow exploits. "
-                    f"Code: {func['code'][:200]}"
-                )
-            rerank_query = " | ".join(rerank_parts)
+            # Use only the top risky function for rerank query.
+            # ms-marco cross-encoder is trained on short NL queries (~20-50 tokens).
+            # Concatenating multiple functions degrades reranking quality.
+            func = risky_functions[0]
+            indicators = ", ".join(func.get('risk_indicators', []))
+            inferred_type = _infer_filter_type(func.get('code', ''))
+            vuln_hint = f" Suspected: {inferred_type}." if inferred_type else ""
+            rerank_query = (
+                f"Solidity vulnerability in function {func['name']} "
+                f"of contract {func['contract']}. "
+                f"Risk: {indicators}.{vuln_hint}{slither_context} "
+                f"Code: {func['code'][:300]}"
+            )
         else:
             # Fallback: no risky functions detected by AST.
             # Still build an NL query so cross-encoder can work properly.
@@ -271,7 +275,7 @@ async def analyze_contract(file: UploadFile = File(...)):
                 f"Code: {code_text[:500]}"
             )
 
-        # 4a: Cross-encoder reranking (ms-marco-MiniLM-L-6-v2)
+        # 4a: Cross-encoder reranking (ms-marco-MiniLM-L-12-v2)
         reranked_results = await asyncio.to_thread(
             smart_rag.reranker.rerank,
             rerank_query[:2000],
