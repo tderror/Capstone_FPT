@@ -78,7 +78,7 @@ class LLMAnalyzer:
             root_cause = case.get('root_cause', '')
             trigger = case.get('trigger_condition', '')
             fix = case.get('fix_solution', '')
-            score = case.get('combined_score', case.get('similarity', 0))
+            score = case.get('relevance_score', case.get('similarity', 0))
 
             section += f"""
 ### Case {i}: {case.get('vulnerability_type', 'Unknown')} {f'({swc_id})' if swc_id else ''} - Relevance: {score:.2f}

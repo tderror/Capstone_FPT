@@ -34,7 +34,7 @@ solc-select install 0.8.0 0.4.26 0.5.17 0.6.12 0.7.6
 solc-select use 0.8.0
 ```
 
-### 2. Configure API Key
+### 2. Configure API Keys
 
 ```bash
 cd backend
@@ -44,14 +44,18 @@ cp .env.example .env
 Edit `.env`:
 
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_CLOUD_PROJECT=your_project_id_here
+GOOGLE_CLOUD_LOCATION=us-central1
 MODEL_NAME=gemini-2.5-pro
-QDRANT_DB_PATH=./qdrant_db_v7
+VOYAGE_API_KEY=your_voyage_api_key_here
+QDRANT_DB_PATH=./qdrant_db_v8
 ```
 
-Get API key: https://aistudio.google.com/apikey
+Get API keys:
+- **Gemini**: https://aistudio.google.com/apikey
+- **Voyage AI**: https://dash.voyageai.com/ (dang ky free tier)
 
-> **Note:** Knowledge Base (`qdrant_db_v7/`) is included in repo with 458 enriched DAppSCAN entries. No need to re-ingest.
+> **Note:** Can chay `python migrate_to_qdrant_v8.py` lan dau de build Knowledge Base (`qdrant_db_v8/`) voi 407 DAppSCAN entries su dung voyage-code-3 embeddings.
 
 ### 3. Frontend Setup
 
@@ -114,12 +118,13 @@ curl -X POST http://localhost:8000/analyze -F "file=@test.sol"
 ```
 DarkHotel-Capstone/
 +-- backend/
-|   +-- main.py                 # Pipeline orchestrator (6-step v6.0)
+|   +-- main.py                 # Pipeline orchestrator (6-step v7.0)
 |   +-- ast_parser.py           # AST parser (tree-sitter + regex)
-|   +-- smart_rag_system.py     # RAG v6 (CodeRankEmbed + Qdrant + Reranker + CRAG)
+|   +-- smart_rag_system.py     # RAG v7 (voyage-code-3 + Qdrant + voyage-rerank-2.5 + CRAG)
 |   +-- llm_analyzer.py         # Gemini 2.5 Pro + CoT + anti-hallucination
 |   +-- slither_smart_wrapper.py  # Slither + auto solc
-|   +-- qdrant_db_v7/           # Vector DB (458 entries, enriched v7)
+|   +-- migrate_to_qdrant_v8.py # Build Qdrant DB from KB JSON
+|   +-- qdrant_db_v8/           # Vector DB (407 entries, voyage-code-3 1024d)
 |   +-- requirements.txt
 |   +-- .env                    # Config (not committed)
 |
@@ -135,7 +140,6 @@ DarkHotel-Capstone/
 +-- docs/
     +-- SETUP.md                # This file
     +-- DEBUGGING.md            # Debug guide
-    +-- WORKFLOW_V6.md          # System architecture (detailed)
 ```
 
 ---
@@ -159,11 +163,18 @@ solc-select use 0.8.20
 
 ### Qdrant DB not found
 
-Knowledge Base is in `backend/qdrant_db_v7/`. If missing:
+Knowledge Base is in `backend/qdrant_db_v8/`. If missing:
 
 ```bash
 cd backend
-python migrate_to_qdrant_v7.py
+python migrate_to_qdrant_v8.py
+```
+
+### Voyage API key errors
+
+```bash
+# Kiem tra VOYAGE_API_KEY trong .env
+# Lay key tai: https://dash.voyageai.com/
 ```
 
 ### CORS blocking requests
@@ -200,5 +211,5 @@ Upload this file to test the system.
 
 ---
 
-**Version:** 6.0
-**Last Updated:** 2026-03-24
+**Version:** 7.0
+**Last Updated:** 2026-04-01

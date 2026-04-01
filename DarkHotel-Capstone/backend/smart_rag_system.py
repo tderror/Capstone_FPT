@@ -1,18 +1,17 @@
 """
-Smart RAG System v6 - DarkHotel
+Smart RAG System v7 - DarkHotel
 ================================
 Knowledge-level RAG with:
-- CodeRankEmbed (nomic-ai, 137M, 768d) for code embedding
+- voyage-code-3 (Voyage AI, 1024d) for code embedding
 - Qdrant (local mode) for vector search
-- ms-marco-MiniLM-L-12-v2 cross-encoder for reranking
+- voyage-rerank-2.5 (Voyage AI) for instruction-following reranking
 - CRAG (Corrective RAG) evaluator for retrieval quality gating
 """
 
 import os
 import sys
 from typing import Dict, List, Optional
-import numpy as np
-from sentence_transformers import SentenceTransformer, CrossEncoder
+import voyageai
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, Filter, FieldCondition, MatchValue
 from dotenv import load_dotenv
@@ -27,97 +26,148 @@ if sys.stdout:
 load_dotenv()
 
 # --- CONFIG ---
-QDRANT_PATH = "./qdrant_db_v7"
-COLLECTION_NAME = "darkhotel_v7"
+QDRANT_PATH = "./qdrant_db_v8"
+COLLECTION_NAME = "darkhotel_v8"
 
 
 # =============================================================================
-# EMBEDDING: CodeRankEmbed (Nomic AI, ICLR 2025)
+# EMBEDDING: voyage-code-3 (Voyage AI)
 # =============================================================================
 
-class CodeRankEmbeddings:
+class VoyageCodeEmbeddings:
     """
-    CodeRankEmbed - 137M param code embedding model.
-    Trained on CoRNStack (21M code examples).
-    768 dimensions, Apache-2.0, runs on CPU.
-
-    Paper: Suresh et al., ICLR 2025 (arXiv:2412.01007)
+    voyage-code-3 - Code-specialized embedding model by Voyage AI.
+    Trained on code + NL pairs across 300+ programming languages.
+    Supports text-to-code, code-to-code, and docstring-to-code retrieval.
+    Default 1024d, supports 256/512/1024/2048. Context: 32K tokens.
     """
 
-    def __init__(self, model_name: str = "nomic-ai/CodeRankEmbed"):
-        self.model = SentenceTransformer(model_name, trust_remote_code=True)
-        self.model.max_seq_length = 8192
-        self.dimension = 768
+    def __init__(self, model_name: str = "voyage-code-3", dimension: int = 1024):
+        api_key = os.getenv("VOYAGE_API_KEY")
+        if not api_key:
+            raise ValueError(
+                "VOYAGE_API_KEY not found in environment variables! "
+                "Get your key at https://dash.voyageai.com/"
+            )
+        self.client = voyageai.Client(api_key=api_key)
+        self.model_name = model_name
+        self.dimension = dimension
 
     def embed_query(self, text: str) -> List[float]:
-        """Embed a search query (uses 'search_query:' prefix per model card)"""
-        prefixed = f"search_query: {text}"
-        return self.model.encode([prefixed], show_progress_bar=False)[0].tolist()
+        """Embed a search query (input_type='query' per Voyage API)"""
+        result = self.client.embed(
+            texts=[text[:16000]],
+            model=self.model_name,
+            input_type="query",
+            output_dimension=self.dimension,
+        )
+        return result.embeddings[0]
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        """Embed multiple documents"""
-        prefixed = [f"search_document: {t}" for t in texts]
-        return self.model.encode(prefixed, show_progress_bar=False).tolist()
+        """Embed multiple documents (input_type='document').
+        Auto-batches to stay within Voyage API limit (max 128 texts per request).
+        """
+        MAX_BATCH = 128
+        truncated = [t[:16000] for t in texts]
+
+        if len(truncated) <= MAX_BATCH:
+            result = self.client.embed(
+                texts=truncated,
+                model=self.model_name,
+                input_type="document",
+                output_dimension=self.dimension,
+            )
+            return result.embeddings
+
+        # Batch large requests
+        all_embeddings = []
+        for i in range(0, len(truncated), MAX_BATCH):
+            batch = truncated[i:i + MAX_BATCH]
+            result = self.client.embed(
+                texts=batch,
+                model=self.model_name,
+                input_type="document",
+                output_dimension=self.dimension,
+            )
+            all_embeddings.extend(result.embeddings)
+        return all_embeddings
 
 
 # =============================================================================
-# CROSS-ENCODER RERANKER: ms-marco-MiniLM-L-12-v2
+# RERANKER: voyage-rerank-2.5 (Voyage AI)
 # =============================================================================
 
-class RelevanceReranker:
+class VoyageReranker:
     """
-    Cross-encoder reranker using ms-marco-MiniLM-L-12-v2 (33M params).
-    Scores (query, document) pairs jointly for fine-grained relevance.
-    L-12 provides better accuracy than L-6 with minimal latency increase.
+    voyage-rerank-2.5 - Instruction-following reranker by Voyage AI.
+    Returns relevance_score [0, 1] directly (no normalization needed).
+    Supports 32K context per document, up to 1000 documents per request.
+    Code-aware: understands Solidity/code semantics (unlike ms-marco NL-only).
+    Supports instruction-following via query prefix.
     """
 
-    def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-12-v2"):
-        self.cross_encoder = CrossEncoder(model_name)
+    def __init__(self, model_name: str = "rerank-2.5"):
+        api_key = os.getenv("VOYAGE_API_KEY")
+        if not api_key:
+            raise ValueError(
+                "VOYAGE_API_KEY not found in environment variables! "
+                "Get your key at https://dash.voyageai.com/"
+            )
+        self.client = voyageai.Client(api_key=api_key)
+        self.model_name = model_name
 
     def rerank(self, query: str, candidates: List[Dict], top_k: int = 5) -> List[Dict]:
         """
-        Rerank candidates using cross-encoder scores.
+        Rerank candidates using voyage-rerank-2.5.
 
-        Returns top_k candidates with both bi-encoder and cross-encoder scores.
-        Final score = 0.4 * bi_encoder + 0.6 * cross_encoder (cross-encoder weighted higher).
+        Returns top_k candidates with relevance_score [0, 1] from Voyage API.
+        No normalization needed — scores are pre-calibrated:
+        - 0.8-1.0: Highly relevant
+        - 0.5-0.8: Moderately relevant
+        - 0.0-0.5: Less relevant
         """
         if not candidates:
             return []
 
-        # Build (query, document) pairs
-        pairs = []
-        for c in candidates:
-            doc_text = self._build_doc_text(c)
-            pairs.append((query[:2000], doc_text[:2000]))  # Truncate for efficiency
+        # Build document texts for reranking
+        documents = [self._build_doc_text(c) for c in candidates]
 
-        # Score with cross-encoder
-        scores = self.cross_encoder.predict(pairs)
+        # Prepend instruction for instruction-following reranker
+        instructed_query = (
+            "Find Solidity smart contract vulnerability patterns matching this code. "
+            "Focus on reentrancy, integer overflow, and unchecked return values.\n\n"
+            + query[:8000]
+        )
 
-        # Normalize cross-encoder scores to 0-1 range using sigmoid
-        # Sigmoid is stable regardless of score distribution (works for 1 candidate or many)
-        norm_scores = [float(1.0 / (1.0 + np.exp(-float(s)))) for s in scores]
+        # Call Voyage rerank API
+        reranking = self.client.rerank(
+            query=instructed_query,
+            documents=documents,
+            model=self.model_name,
+            top_k=top_k,
+        )
 
-        # Attach scores — keep original similarity (bi-encoder cosine) intact
-        for i, c in enumerate(candidates):
-            c["bi_encoder_score"] = c.get("similarity", 0)
-            c["cross_encoder_score"] = norm_scores[i]
-            c["combined_score"] = round(
-                0.4 * c["bi_encoder_score"] + 0.6 * c["cross_encoder_score"], 4
-            )
+        # Map results back to candidates with scores
+        for result in reranking.results:
+            idx = result.index
+            candidates[idx]["relevance_score"] = result.relevance_score
+            candidates[idx]["bi_encoder_score"] = candidates[idx].get("similarity", 0)
 
-        return sorted(candidates, key=lambda x: x["combined_score"], reverse=True)[:top_k]
+        # Sort by relevance_score and return top_k
+        scored = [c for c in candidates if "relevance_score" in c]
+        scored.sort(key=lambda x: x["relevance_score"], reverse=True)
+        return scored[:top_k]
 
     def _build_doc_text(self, candidate: Dict) -> str:
-        """Build text representation of a candidate for cross-encoder.
-
-        Format matches the NL+code style used in rerank queries so that
-        ms-marco cross-encoder can measure genuine relevance.
-        """
+        """Build text representation of a candidate for reranker."""
         parts = []
         vtype = candidate.get("vulnerability_type", "")
         swc = candidate.get("swc_id", "")
         if vtype:
             parts.append(f"Solidity vulnerability: {vtype} ({swc})")
+        severity = candidate.get("severity", "")
+        if severity:
+            parts.append(f"Severity: {severity}")
         func = candidate.get("function", "")
         if func:
             parts.append(f"in function {func}")
@@ -132,7 +182,7 @@ class RelevanceReranker:
             parts.append(f"Fix: {fix}")
         code = candidate.get("code_snippet_vulnerable", "")
         if code:
-            parts.append(f"Code: {code[:400]}")
+            parts.append(f"Code: {code[:1000]}")
         return ". ".join(parts) if parts else str(candidate)
 
 
@@ -144,12 +194,14 @@ class CRAGEvaluator:
     """
     Corrective RAG evaluator based on Yan et al. (arXiv:2401.15884).
 
-    Uses cross-encoder relevance scores to determine retrieval quality:
-    - CORRECT (score >= 0.7): Retrieved evidence is highly relevant, pass to LLM
+    Adapted for voyage-rerank-2.5 scores (pre-calibrated [0, 1]):
+    - CORRECT (score >= 0.7): Highly relevant, pass all evidence to LLM
     - AMBIGUOUS (0.3 <= score < 0.7): Partially relevant, pass filtered evidence
-    - INCORRECT (score < 0.3): Irrelevant retrieval, discard and let LLM judge alone
+    - INCORRECT (score < 0.3): Irrelevant, discard and let LLM judge alone
 
-    This replaces the simple threshold gate and provides principled quality control.
+    voyage-rerank-2.5 understands code natively, so the bi-encoder floor
+    workaround (needed when ms-marco NL-only reranker disagreed with
+    CodeRankEmbed on code similarity) is no longer necessary.
     """
 
     CORRECT_THRESHOLD = 0.7
@@ -159,20 +211,16 @@ class CRAGEvaluator:
         """
         Evaluate retrieval quality and determine action.
 
-        Decision logic (evaluated top-down, first match wins):
+        Uses MAX relevance_score across all candidates (not just [0]).
 
-        1. Bi-encoder floor: if CodeRankEmbed (code-specialist) gives high
-           confidence (bi >= 0.75) but combined_score is low (cross-encoder
-           disagrees), trust the code model and preserve as AMBIGUOUS.
-           This prevents the NL cross-encoder from discarding code-relevant results.
-
-        2. Combined score >= 0.7 → CORRECT (high confidence from both models)
-        3. Combined score >= 0.3 → AMBIGUOUS (partial relevance)
-        4. Otherwise → INCORRECT (discard, LLM judges alone)
+        Decision logic:
+        1. Max relevance_score >= 0.7 → CORRECT (high confidence)
+        2. Max relevance_score >= 0.3 → AMBIGUOUS (partial relevance)
+        3. Otherwise → INCORRECT (discard, LLM judges alone)
 
         Args:
-            candidates: Reranked candidates (must have 'combined_score' and
-                        'bi_encoder_score' fields from RelevanceReranker)
+            candidates: Reranked candidates (must have 'relevance_score'
+                        field from VoyageReranker)
 
         Returns:
             (action, filtered_candidates):
@@ -182,31 +230,15 @@ class CRAGEvaluator:
         if not candidates:
             return "INCORRECT", []
 
-        top_combined = candidates[0].get("combined_score", 0)
-        top_bi = candidates[0].get("bi_encoder_score", 0)
-        top_ce = candidates[0].get("cross_encoder_score", 0)
+        max_relevance = max(c.get("relevance_score", 0) for c in candidates)
 
-        # Bi-encoder floor: CodeRankEmbed is code-specialized (21M code examples).
-        # If it says "highly relevant" (bi >= 0.75) but the NL cross-encoder
-        # scored low (ce < 0.3), the cross-encoder likely doesn't understand the
-        # code similarity. Preserve evidence as AMBIGUOUS instead of dropping.
-        # We check cross_encoder_score directly (not combined_score) because
-        # combined = 0.4*bi + 0.6*ce is always >= 0.3 when bi >= 0.75,
-        # making a combined_score check unreachable (dead code).
-        if top_bi >= 0.75 and top_ce < 0.3:
-            filtered = [
-                c for c in candidates
-                if c.get("bi_encoder_score", 0) >= 0.6
-            ]
-            return "AMBIGUOUS", filtered
-
-        if top_combined >= self.CORRECT_THRESHOLD:
+        if max_relevance >= self.CORRECT_THRESHOLD:
             return "CORRECT", candidates
 
-        elif top_combined >= self.INCORRECT_THRESHOLD:
+        elif max_relevance >= self.INCORRECT_THRESHOLD:
             filtered = [
                 c for c in candidates
-                if c.get("combined_score", 0) >= self.INCORRECT_THRESHOLD
+                if c.get("relevance_score", 0) >= self.INCORRECT_THRESHOLD
             ]
             return "AMBIGUOUS", filtered
 
@@ -215,39 +247,39 @@ class CRAGEvaluator:
 
 
 # =============================================================================
-# SMART RAG SYSTEM v6
+# SMART RAG SYSTEM v7
 # =============================================================================
 
 class SmartRAGSystem:
     """
-    Smart RAG System v6 - Knowledge-level RAG for Smart Contract Vulnerability Detection
+    Smart RAG System v7 - Knowledge-level RAG for Smart Contract Vulnerability Detection
 
     Components:
-    - CodeRankEmbed (137M, 768d) for code-specialized embedding
+    - voyage-code-3 (1024d) for code-specialized embedding
     - Qdrant (local mode) for vector similarity search with metadata filtering
-    - ms-marco-MiniLM-L-12 cross-encoder for reranking
+    - voyage-rerank-2.5 for instruction-following reranking
     - CRAG evaluator for retrieval quality gating
 
-    v6 Updates:
-    - Replaced UniXcoder with CodeRankEmbed (ICLR 2025)
-    - Replaced ChromaDB with Qdrant local mode
-    - Added cross-encoder reranking (ms-marco-MiniLM-L-12-v2)
-    - Added CRAG evaluator (Correct/Ambiguous/Incorrect actions)
-    - Knowledge-enriched KB with root_cause, trigger_condition, fix_solution
+    v7 Updates:
+    - Replaced CodeRankEmbed with voyage-code-3 (code + NL, 300+ languages)
+    - Replaced ms-marco-MiniLM with voyage-rerank-2.5 (code-aware, instruction-following)
+    - Simplified scoring: relevance_score [0,1] from Voyage (no custom normalization)
+    - Simplified CRAG: no bi-encoder floor workaround needed
+    - 1024d vectors (up from 768d)
     """
 
     def __init__(self, persist_directory: str = QDRANT_PATH):
-        print(f"[SmartRAG v6] Initializing...")
+        print(f"[SmartRAG v7] Initializing...")
 
         self.persist_directory = persist_directory
-        self.kb_version = "v7"
+        self.kb_version = "v8"
 
-        # 1. CodeRankEmbed embedding model
-        print(f"[SmartRAG v6] Loading CodeRankEmbed embedding model...")
-        self.embedding = CodeRankEmbeddings()
+        # 1. voyage-code-3 embedding model
+        print(f"[SmartRAG v7] Loading voyage-code-3 embedding model...")
+        self.embedding = VoyageCodeEmbeddings()
 
         # 2. Qdrant vector database (local mode, no Docker)
-        print(f"[SmartRAG v6] Connecting to Qdrant at {persist_directory}...")
+        print(f"[SmartRAG v7] Connecting to Qdrant at {persist_directory}...")
         self.qdrant = QdrantClient(path=persist_directory)
 
         # Check collection
@@ -255,20 +287,20 @@ class SmartRAGSystem:
         if COLLECTION_NAME in collections:
             info = self.qdrant.get_collection(COLLECTION_NAME)
             self.total_entries = info.points_count
-            self.kb_version = "v7-knowledge-enriched"
-            print(f"[SmartRAG v6] KB Connected: {self.total_entries} entries")
+            self.kb_version = "v8-voyage-code-3"
+            print(f"[SmartRAG v7] KB Connected: {self.total_entries} entries")
         else:
             self.total_entries = 0
-            print(f"[SmartRAG v6] WARNING: Collection '{COLLECTION_NAME}' not found. Run migrate_to_qdrant.py first.")
+            print(f"[SmartRAG v7] WARNING: Collection '{COLLECTION_NAME}' not found. Run migrate_to_qdrant_v8.py first.")
 
-        # 3. Cross-encoder reranker
-        print(f"[SmartRAG v6] Loading cross-encoder reranker...")
-        self.reranker = RelevanceReranker()
+        # 3. voyage-rerank-2.5 reranker
+        print(f"[SmartRAG v7] Loading voyage-rerank-2.5 reranker...")
+        self.reranker = VoyageReranker()
 
         # 4. CRAG evaluator
         self.crag = CRAGEvaluator()
 
-        print(f"[SmartRAG v6] Ready!")
+        print(f"[SmartRAG v7] Ready!")
 
     def get_stats(self) -> Dict:
         """Return stats for health check"""
@@ -283,10 +315,10 @@ class SmartRAGSystem:
             "collection": COLLECTION_NAME,
             "categories": categories,
             "source": "DAppSCAN (608 professional audits, v7-quality-fixed)",
-            "embedding": "CodeRankEmbed (nomic-ai, 768d)",
+            "embedding": "voyage-code-3 (Voyage AI, 1024d)",
             "vector_db": "Qdrant (local mode)",
-            "reranker": "ms-marco-MiniLM-L-12-v2",
-            "crag": "Cross-encoder CRAG evaluator",
+            "reranker": "voyage-rerank-2.5 (Voyage AI)",
+            "crag": "CRAG evaluator (relevance_score gating)",
         }
 
     # ─── Vector Search ────────────────────────────────────────────────
@@ -322,11 +354,8 @@ class SmartRAGSystem:
                     FieldCondition(key="swc_name", match=MatchValue(value=mapped))
                 ])
 
-            # Retrieve with relaxed threshold — let cross-encoder reranker
-            # decide relevance instead of hard-filtering at bi-encoder stage.
-            # Old threshold 0.3 was too aggressive: code with different structure
-            # but same vulnerability pattern (e.g., overflow in loop vs in transfer)
-            # could score below 0.3 in cosine similarity but still be relevant.
+            # Retrieve with relaxed threshold — let voyage-rerank-2.5 reranker
+            # decide relevance instead of hard-filtering at embedding stage.
             query_result = self.qdrant.query_points(
                 collection_name=COLLECTION_NAME,
                 query=query_vector,
@@ -356,12 +385,12 @@ class SmartRAGSystem:
                 })
 
             formatted = sorted(formatted, key=lambda x: x["similarity"], reverse=True)
-            print(f"[SmartRAG v6] Bi-encoder retrieved: {len(formatted)} results")
+            print(f"[SmartRAG v7] Embedding retrieved: {len(formatted)} results")
 
             return formatted
 
         except Exception as e:
-            print(f"[SmartRAG v6] Search error: {e}")
+            print(f"[SmartRAG v7] Search error: {e}")
             return []
 
 

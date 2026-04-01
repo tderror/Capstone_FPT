@@ -1,10 +1,10 @@
-# DarkHotel Backend - Smart Contract Analyzer API v6.0
+# DarkHotel Backend - Smart Contract Analyzer API v7.0
 
-API phan tich lo hong smart contract Solidity su dung **6-Step Sequential Pipeline**: AST (tree-sitter) + Slither + RAG (CodeRankEmbed + Qdrant) + Cross-Encoder Reranking + CRAG Gate + LLM CoT.
+API phan tich lo hong smart contract Solidity su dung **6-Step Sequential Pipeline**: AST (tree-sitter) + Slither + RAG (voyage-code-3 + Qdrant) + Voyage Reranking + CRAG Gate + LLM CoT.
 
 ---
 
-## Pipeline v6.0
+## Pipeline v7.0
 
 ```
 Upload .sol
@@ -14,11 +14,11 @@ Upload .sol
     |
     v  (PARALLEL)
 [2] Slither ---------- Static analysis, extract hints
-[3] RAG Search ------- Per-function search trong 458 DAppSCAN cases (CodeRankEmbed + Qdrant)
+[3] RAG Search ------- Per-function search trong 407 DAppSCAN cases (voyage-code-3 + Qdrant)
     |
     v
-[4] Cross-Encoder Reranking + CRAG Gate
-    |  ms-marco-MiniLM-L-12-v2 reranking
+[4] Voyage Reranking + CRAG Gate
+    |  voyage-rerank-2.5 (instruction-following, code-aware)
     |  CRAG: CORRECT (>=0.7) -> full evidence
     |        AMBIGUOUS (0.3-0.7) -> filtered evidence
     |        INCORRECT (<0.3) -> no evidence (LLM-only mode)
@@ -37,11 +37,11 @@ Upload .sol
 | Integer Overflow | SWC-101 | Operator-based (+=, -=, ++, --) + version check (pre-0.8) |
 | Unchecked Return Value | SWC-104 | AST (has_external_call) + unchecked pattern |
 
-### Key Features (v6.0)
+### Key Features (v7.0)
 
-- **CodeRankEmbed**: nomic-ai, 768d, ICLR 2025 embedding model for code
+- **voyage-code-3**: Voyage AI, 1024d, code-specialized embedding (300+ languages)
 - **Qdrant**: Local vector database (no Docker required)
-- **Cross-Encoder Reranking**: ms-marco-MiniLM-L-12-v2 for precise relevance scoring
+- **voyage-rerank-2.5**: Instruction-following reranker (code-aware, relevance_score [0,1])
 - **CRAG Gate**: Rule-based Corrective RAG evaluator (Correct/Ambiguous/Incorrect)
 - **14 anti-hallucination rules**: Strict SWC type filtering in LLM prompt
 - **Parallel execution**: Slither + RAG chay dong thoi (asyncio.gather)
@@ -56,8 +56,8 @@ Upload .sol
 | Web Framework | FastAPI 0.128+ |
 | Static Analyzer | Slither (auto solc install) |
 | Vector Database | Qdrant (local mode) |
-| Embeddings | CodeRankEmbed (nomic-ai, 768d) |
-| Reranker | ms-marco-MiniLM-L-12-v2 (cross-encoder) |
+| Embeddings | voyage-code-3 (Voyage AI, 1024d) |
+| Reranker | voyage-rerank-2.5 (Voyage AI, instruction-following) |
 | RAG Quality Gate | CRAG Evaluator (rule-based) |
 | LLM | Gemini 2.5 Pro |
 | Python | 3.10+ |
@@ -68,15 +68,16 @@ Upload .sol
 
 ```
 backend/
-+-- main.py                     # FastAPI server (6-step pipeline v6.0)
++-- main.py                     # FastAPI server (6-step pipeline v7.0)
 +-- ast_parser.py               # AST parser (tree-sitter + regex fallback)
 +-- slither_smart_wrapper.py    # Slither + auto solc version install
-+-- smart_rag_system.py         # RAG v6 (CodeRankEmbed + Qdrant + Reranker + CRAG)
++-- smart_rag_system.py         # RAG v7 (voyage-code-3 + Qdrant + voyage-rerank-2.5 + CRAG)
 +-- llm_analyzer.py             # LLM CoT + 14 anti-hallucination rules
 |
-+-- qdrant_db_v7/               # Vector DB (Qdrant, 458 DAppSCAN entries, enriched v7)
++-- qdrant_db_v8/               # Vector DB (Qdrant, 407 DAppSCAN entries, voyage-code-3 1024d)
 +-- darkhotel_knowledge_base_v7.json  # Knowledge base source
-+-- migrate_to_qdrant_v7.py     # Script rebuild Qdrant DB tu JSON
++-- migrate_to_qdrant_v8.py     # Script rebuild Qdrant DB tu JSON (voyage-code-3)
++-- migrate_to_qdrant_v7.py     # Legacy migration script (CodeRankEmbed, 768d)
 +-- .env                        # Environment config (khong commit)
 +-- .env.example                # Config template
 +-- requirements.txt            # Python dependencies
@@ -122,14 +123,23 @@ cp .env.example .env
 Sua file `.env`:
 
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_CLOUD_PROJECT=your_project_id_here
+GOOGLE_CLOUD_LOCATION=us-central1
 MODEL_NAME=gemini-2.5-pro
-QDRANT_DB_PATH=./qdrant_db_v7
+VOYAGE_API_KEY=your_voyage_api_key_here
+QDRANT_DB_PATH=./qdrant_db_v8
 ```
 
-Lay API key tai: https://aistudio.google.com/apikey
+Lay Voyage API key tai: https://dash.voyageai.com/
 
-> **Luu y:** Knowledge Base (`qdrant_db_v7/`) da co san trong repo voi 458 enriched DAppSCAN entries. Khong can chay ingest lai.
+### 4. Build Knowledge Base (lan dau)
+
+```bash
+cd backend
+python migrate_to_qdrant_v8.py
+```
+
+Script se embed 407 entries bang voyage-code-3 va luu vao `qdrant_db_v8/`.
 
 ---
 
@@ -170,7 +180,7 @@ Response:
 {
   "success": true,
   "filename": "contract.sol",
-  "pipeline_version": "6.0-6step",
+  "pipeline_version": "7.0-6step",
   "ai_analysis_structured": {
     "verdict": "VULNERABLE",
     "confidence": "HIGH",
@@ -188,7 +198,7 @@ Response:
     "similar_cases": [],
     "total_candidates": 15,
     "top_k_ranked": 5,
-    "version": "v6.0-qdrant-coderankembed"
+    "version": "v7.0-qdrant-voyage-code-3"
   },
   "slither_analysis": {
     "warnings": ["[High] reentrancy-eth: ..."],
@@ -215,19 +225,23 @@ solc-select use 0.8.20
 
 ### Database not found
 
-Knowledge Base da co san trong `qdrant_db_v7/`. Neu bi mat, rebuild:
+Rebuild Knowledge Base:
 
 ```bash
 cd backend
-python migrate_to_qdrant_v7.py
+python migrate_to_qdrant_v8.py
 ```
+
+### Voyage API key error
+
+Kiem tra `VOYAGE_API_KEY` trong file `.env`. Lay key tai https://dash.voyageai.com/
 
 ---
 
-**Version**: 6.0
-**Last Updated**: 2026-03-24
-**Knowledge Base**: 458 DAppSCAN entries (enriched v7, 29 security teams, 608 audits)
-**Embedding**: CodeRankEmbed (nomic-ai, 768d, ICLR 2025)
-**Reranker**: ms-marco-MiniLM-L-12-v2 (cross-encoder)
+**Version**: 7.0
+**Last Updated**: 2026-04-01
+**Knowledge Base**: 407 DAppSCAN entries (enriched v7, 29 security teams, 608 audits)
+**Embedding**: voyage-code-3 (Voyage AI, 1024d)
+**Reranker**: voyage-rerank-2.5 (Voyage AI, instruction-following)
 **Vector DB**: Qdrant (local mode)
 **Detection**: Reentrancy (SWC-107), Integer Overflow (SWC-101), Unchecked Return Value (SWC-104)

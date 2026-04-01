@@ -1,12 +1,12 @@
 # DarkHotel - Smart Contract Vulnerability Analyzer
 
-AI-powered Solidity vulnerability detection using a **6-Step Sequential Pipeline**: AST Chunking (tree-sitter) + Slither + RAG (CodeRankEmbed + Qdrant) + Cross-Encoder Reranking + CRAG Gate + LLM Chain-of-Thought.
+AI-powered Solidity vulnerability detection using a **6-Step Sequential Pipeline**: AST Chunking (tree-sitter) + Slither + RAG (voyage-code-3 + Qdrant) + Voyage Reranking + CRAG Gate + LLM Chain-of-Thought.
 
-![Version](https://img.shields.io/badge/Version-6.0-blue)
+![Version](https://img.shields.io/badge/Version-7.0-blue)
 ![Backend](https://img.shields.io/badge/Backend-FastAPI-green)
 ![Frontend](https://img.shields.io/badge/Frontend-Next.js%2016-black)
 ![AI](https://img.shields.io/badge/AI-Gemini%202.5%20Pro-purple)
-![RAG](https://img.shields.io/badge/RAG-DAppSCAN%20458%20cases-orange)
+![RAG](https://img.shields.io/badge/RAG-DAppSCAN%20407%20cases-orange)
 
 ---
 
@@ -24,8 +24,8 @@ Upload .sol  -->  [1] AST Chunking  -->  [2+3] Slither + RAG (parallel)
 |------|-----------|-----------|---------|
 | 1 | AST Chunking | tree-sitter + Regex fallback | Tach function, xac dinh risky functions |
 | 2 | Slither | Static Analyzer | Phat hien pattern, tao hints cho RAG |
-| 3 | RAG Search | Qdrant + CodeRankEmbed (768d) | Tim vuln tuong tu trong 458 case DAppSCAN |
-| 4 | Cross-Encoder Reranking + CRAG Gate | ms-marco-MiniLM + Rule-based CRAG | Rerank + quality gate (Correct/Ambiguous/Incorrect) |
+| 3 | RAG Search | Qdrant + voyage-code-3 (1024d) | Tim vuln tuong tu trong 407 case DAppSCAN |
+| 4 | Voyage Reranking + CRAG Gate | voyage-rerank-2.5 + Rule-based CRAG | Rerank + quality gate (Correct/Ambiguous/Incorrect) |
 | 5 | LLM CoT | Gemini 2.5 Pro | Chain-of-Thought reasoning + 14 anti-hallucination rules |
 | 6 | Report | JSON structured | Verdict + vulnerabilities + evidence |
 
@@ -91,12 +91,14 @@ cp .env.example .env
 Mo file `backend/.env` va them API key:
 
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_CLOUD_PROJECT=your_project_id_here
+GOOGLE_CLOUD_LOCATION=us-central1
 MODEL_NAME=gemini-2.5-pro
-QDRANT_DB_PATH=./qdrant_db_v7
+VOYAGE_API_KEY=your_voyage_api_key_here
+QDRANT_DB_PATH=./qdrant_db_v8
 ```
 
-> **Luu y:** Knowledge Base (`qdrant_db_v7/`) da duoc bao gom san trong repo voi 458 DAppSCAN entries (enriched v7). Khong can chay ingest lai.
+> **Luu y:** Can chay `python migrate_to_qdrant_v8.py` lan dau de build Knowledge Base (`qdrant_db_v8/`) voi 407 DAppSCAN entries.
 
 ### 4. Setup Frontend
 
@@ -150,13 +152,13 @@ npm run dev
 DarkHotel-Capstone/
 |
 +-- backend/
-|   +-- main.py                         # FastAPI server (6-step pipeline v6.0)
+|   +-- main.py                         # FastAPI server (6-step pipeline v7.0)
 |   +-- ast_parser.py                   # AST chunking - tree-sitter + regex (Step 1)
 |   +-- slither_smart_wrapper.py        # Slither integration + auto solc (Step 2)
-|   +-- smart_rag_system.py             # RAG v6 - CodeRankEmbed + Qdrant + Reranker + CRAG (Step 3-4)
+|   +-- smart_rag_system.py             # RAG v7 - voyage-code-3 + Qdrant + voyage-rerank-2.5 + CRAG (Step 3-4)
 |   +-- llm_analyzer.py                 # Gemini 2.5 Pro + CoT + 14 anti-hallucination rules (Step 5)
 |   |
-|   +-- qdrant_db_v7/                   # Vector DB (458 DAppSCAN entries, enriched v7)
+|   +-- qdrant_db_v8/                   # Vector DB (407 DAppSCAN entries, voyage-code-3 1024d)
 |   +-- darkhotel_knowledge_base_v7.json  # Knowledge base source (JSON)
 |   +-- .env.example                    # Environment template
 |   +-- requirements.txt                # Python dependencies
@@ -185,7 +187,7 @@ DarkHotel-Capstone/
 
 ---
 
-## Evaluation Results (v6.0)
+## Evaluation Results (v7.0)
 
 > *Chua co ket qua. Can chay lai evaluation sau khi test.*
 
@@ -200,8 +202,8 @@ DarkHotel-Capstone/
 | Web Framework | FastAPI 0.128+ |
 | Static Analyzer | Slither |
 | Vector Database | Qdrant (local mode) |
-| Embeddings | CodeRankEmbed (nomic-ai, 768d, ICLR 2025) |
-| Reranker | ms-marco-MiniLM-L-12-v2 (cross-encoder) |
+| Embeddings | voyage-code-3 (Voyage AI, 1024d) |
+| Reranker | voyage-rerank-2.5 (Voyage AI, instruction-following) |
 | RAG Quality Gate | CRAG Evaluator (rule-based) |
 | LLM | Gemini 2.5 Pro |
 | Python | 3.10+ |
@@ -271,8 +273,8 @@ curl http://localhost:8000/
 
 ```bash
 cd backend
-# Rebuild Qdrant v7 tu knowledge base JSON
-python migrate_to_qdrant_v7.py
+# Rebuild Qdrant v8 tu knowledge base JSON (voyage-code-3)
+python migrate_to_qdrant_v8.py
 ```
 
 ---
@@ -283,11 +285,11 @@ MIT License
 
 ---
 
-**Version:** 6.0
-**Last Updated:** 2026-03-24
-**Knowledge Base:** 458 DAppSCAN entries (enriched v7, 29 security teams, 608 audits)
-**Embedding:** CodeRankEmbed (nomic-ai, 768d, ICLR 2025)
-**Reranker:** ms-marco-MiniLM-L-12-v2 (cross-encoder)
+**Version:** 7.0
+**Last Updated:** 2026-04-01
+**Knowledge Base:** 407 DAppSCAN entries (enriched v7, 29 security teams, 608 audits)
+**Embedding:** voyage-code-3 (Voyage AI, 1024d)
+**Reranker:** voyage-rerank-2.5 (Voyage AI, instruction-following)
 **Vector DB:** Qdrant (local mode)
 **Detection:** Reentrancy (SWC-107), Integer Overflow (SWC-101), Unchecked Return Value (SWC-104)
 

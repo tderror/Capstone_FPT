@@ -12,7 +12,7 @@ load_dotenv()
 
 # Import modules
 from ast_parser import SolidityASTParser
-from smart_rag_system import SmartRAGSystem  # v6 - CodeRankEmbed + Qdrant + Reranker + CRAG
+from smart_rag_system import SmartRAGSystem  # v7 - voyage-code-3 + Qdrant + voyage-rerank-2.5 + CRAG
 from llm_analyzer import LLMAnalyzer
 
 def _infer_filter_type(code: str) -> str:
@@ -38,8 +38,8 @@ def _infer_filter_type(code: str) -> str:
 
 app = FastAPI(
     title="DarkHotel Smart Contract Analyzer",
-    version="6.0.0",
-    description="AI-powered Solidity vulnerability detection: 6-Step Pipeline (AST tree-sitter -> Slither + RAG -> Cross-Encoder Rerank + CRAG Gate -> LLM CoT -> JSON Report)"
+    version="7.0.0",
+    description="AI-powered Solidity vulnerability detection: 6-Step Pipeline (AST tree-sitter -> Slither + RAG -> Voyage Rerank + CRAG Gate -> LLM CoT -> JSON Report)"
 )
 
 app.add_middleware(
@@ -65,19 +65,19 @@ if not GOOGLE_CLOUD_PROJECT:
 
 GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro")
-QDRANT_DB_PATH = os.getenv("QDRANT_DB_PATH", "./qdrant_db_v7")
+QDRANT_DB_PATH = os.getenv("QDRANT_DB_PATH", "./qdrant_db_v8")
 
 # Initialize modules (once at server start)
-print("[INIT] Initializing DarkHotel v6.0...")
+print("[INIT] Initializing DarkHotel v7.0...")
 print(f"[INIT] Model: {MODEL_NAME}")
-print("[INIT] Pipeline: AST (tree-sitter) -> Slither + RAG (parallel) -> Cross-Encoder Rerank + CRAG Gate -> LLM CoT -> JSON Report")
+print("[INIT] Pipeline: AST (tree-sitter) -> Slither + RAG (parallel) -> Voyage Rerank + CRAG Gate -> LLM CoT -> JSON Report")
 ast_parser = SolidityASTParser()
 from slither_smart_wrapper import SmartSlitherWrapper
 slither = SmartSlitherWrapper()
 smart_rag = SmartRAGSystem(persist_directory=QDRANT_DB_PATH)
 llm = LLMAnalyzer(project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_LOCATION, model=MODEL_NAME)
 rag_stats = smart_rag.get_stats()
-print(f"[INIT] All modules ready! (tree-sitter + Slither + RAG v6 [{rag_stats['total_cases']} cases] + CodeRankEmbed + {MODEL_NAME})")
+print(f"[INIT] All modules ready! (tree-sitter + Slither + RAG v7 [{rag_stats['total_cases']} cases] + voyage-code-3 + voyage-rerank-2.5 + {MODEL_NAME})")
 
 
 @app.get("/")
@@ -86,15 +86,15 @@ async def root():
     stats = smart_rag.get_stats()
     return {
         "status": "online",
-        "version": "6.0.0",
-        "pipeline": "AST (tree-sitter) -> Slither + RAG (parallel) -> Cross-Encoder Rerank + CRAG Gate -> LLM CoT -> JSON Report",
+        "version": "7.0.0",
+        "pipeline": "AST (tree-sitter) -> Slither + RAG (parallel) -> Voyage Rerank + CRAG Gate -> LLM CoT -> JSON Report",
         "model": MODEL_NAME,
         "modules": {
             "ast_parser": f"ready (tree-sitter: {ast_parser.ts_available})",
             "slither": "ready (Smart Wrapper)",
             "smart_rag": f"ready ({stats['total_cases']} cases, {stats['version']})",
-            "embedding": f"ready ({stats.get('embedding', 'CodeRankEmbed')})",
-            "reranker": f"ready ({stats.get('reranker', 'ms-marco-MiniLM')})",
+            "embedding": f"ready ({stats.get('embedding', 'voyage-code-3')})",
+            "reranker": f"ready ({stats.get('reranker', 'voyage-rerank-2.5')})",
             "crag": f"ready ({stats.get('crag', 'CRAG evaluator')})",
             "vector_db": f"ready ({stats.get('vector_db', 'Qdrant')})",
             "llm": f"ready ({MODEL_NAME})"
@@ -105,17 +105,17 @@ async def root():
 @app.post("/analyze")
 async def analyze_contract(file: UploadFile = File(...)):
     """
-    6-Step Pipeline v6.0
+    6-Step Pipeline v7.0
 
     1. AST Chunking (tree-sitter) - Extract function-level semantic chunks
     2. Slither Static Analysis (parallel with RAG)
-    3. RAG Search - Per-function retrieval with CodeRankEmbed + Qdrant
-    4. Cross-Encoder Reranking (ms-marco-MiniLM) + CRAG Gate (Correct/Ambiguous/Incorrect)
+    3. RAG Search - Per-function retrieval with voyage-code-3 + Qdrant
+    4. Voyage Reranking (rerank-2.5) + CRAG Gate (Correct/Ambiguous/Incorrect)
     5. LLM CoT Reasoning - Tri-partite prompt (code + slither + gated RAG evidence)
     6. Generate Report - Structured JSON output
     """
     print(f"\n{'='*60}")
-    print(f"[PIPELINE v6.0] 6-Step Analysis")
+    print(f"[PIPELINE v7.0] 6-Step Analysis")
     print(f"{'='*60}")
 
     try:
@@ -247,13 +247,12 @@ async def analyze_contract(file: UploadFile = File(...)):
 
         print(f"   -> Raw: {len(rag_candidates)}, Unique: {len(unique_candidates)}")
 
-        # === STEP 4: Cross-Encoder Reranking + CRAG Gate ===
-        print("\n[STEP 4/6] Cross-encoder reranking + CRAG gate...")
+        # === STEP 4: Voyage Reranking + CRAG Gate ===
+        print("\n[STEP 4/6] Voyage reranking + CRAG gate...")
 
         # Build rerank query from risky functions.
-        # Fix #3: ms-marco cross-encoder is NL-trained — emphasize NL description
-        # over raw code. Include vulnerability context so cross-encoder can
-        # measure genuine relevance instead of being confused by Solidity syntax.
+        # voyage-rerank-2.5 is code-aware and instruction-following.
+        # Include vulnerability context + Slither hints for best relevance scoring.
         # Build Slither-enhanced context for reranking
         slither_context = ""
         if slither_vuln_types:
@@ -261,8 +260,8 @@ async def analyze_contract(file: UploadFile = File(...)):
 
         if risky_functions:
             # Build rerank query from top risky functions (up to 3).
-            # ms-marco cross-encoder works best with short NL queries,
-            # so we summarize multiple functions rather than concatenating full code.
+            # voyage-rerank-2.5 handles both NL and code, but we still
+            # summarize for efficiency (query limit = 8000 tokens).
             top_funcs = risky_functions[:3]
             func_summaries = []
             vuln_hints = set()
@@ -282,7 +281,7 @@ async def analyze_contract(file: UploadFile = File(...)):
             )
         else:
             # Fallback: no risky functions detected by AST.
-            # Still build an NL query so cross-encoder can work properly.
+            # Still build an NL query so reranker can work properly.
             inferred = _infer_filter_type(code_text)
             vuln_hint = f" Suspected: {inferred}." if inferred else ""
             rerank_query = (
@@ -291,10 +290,10 @@ async def analyze_contract(file: UploadFile = File(...)):
                 f"Code: {code_text[:500]}"
             )
 
-        # 4a: Cross-encoder reranking (ms-marco-MiniLM-L-12-v2)
+        # 4a: Voyage reranking (voyage-rerank-2.5)
         reranked_results = await asyncio.to_thread(
             smart_rag.reranker.rerank,
-            rerank_query[:2000],
+            rerank_query,
             unique_candidates,
             5
         )
@@ -302,15 +301,14 @@ async def analyze_contract(file: UploadFile = File(...)):
         print(f"   -> {len(unique_candidates)} candidates -> {len(reranked_results)} reranked results")
         for i, r in enumerate(reranked_results):
             bi = r.get('bi_encoder_score', 0)
-            ce = r.get('cross_encoder_score', 0)
-            combined = r.get('combined_score', 0)
-            print(f"      [{i+1}] {r.get('vulnerability_type', '?')} (bi={bi:.4f}, ce={ce:.4f}, combined={combined:.4f})")
+            rel = r.get('relevance_score', 0)
+            print(f"      [{i+1}] {r.get('vulnerability_type', '?')} (bi={bi:.4f}, relevance={rel:.4f})")
 
         # 4b: CRAG evaluation (Corrective RAG)
         crag_action, gated_evidence = smart_rag.crag.evaluate(reranked_results)
-        top_combined = reranked_results[0].get('combined_score', 0) if reranked_results else 0
+        top_relevance = reranked_results[0].get('relevance_score', 0) if reranked_results else 0
         top_bi = reranked_results[0].get('bi_encoder_score', 0) if reranked_results else 0
-        print(f"   -> CRAG gate: {crag_action} (top combined={top_combined:.4f}, top bi={top_bi:.4f})")
+        print(f"   -> CRAG gate: {crag_action} (top relevance={top_relevance:.4f}, top bi={top_bi:.4f})")
 
         if crag_action == "CORRECT":
             evidence_for_llm = gated_evidence
@@ -360,7 +358,7 @@ async def analyze_contract(file: UploadFile = File(...)):
         response = {
             "success": True,
             "filename": file.filename,
-            "pipeline_version": "6.0-6step",
+            "pipeline_version": "7.0-6step",
 
             # AI Analysis - raw text (backward compat) + structured JSON
             "ai_analysis": ai_raw,
@@ -377,8 +375,7 @@ async def analyze_contract(file: UploadFile = File(...)):
                         "swc_id": case.get('swc_id', 'N/A'),
                         "severity": case.get('severity', 'Unknown'),
                         "bi_encoder_score": case.get('bi_encoder_score', case.get('similarity', 0)),
-                        "cross_encoder_score": case.get('cross_encoder_score', 0),
-                        "combined_score": case.get('combined_score', 0),
+                        "relevance_score": case.get('relevance_score', 0),
                         "function": case.get('function', 'N/A'),
                         "line_number": case.get('line_number', 'N/A'),
                         "audit_company": case.get('audit_company', 'N/A'),
@@ -389,7 +386,7 @@ async def analyze_contract(file: UploadFile = File(...)):
                 ],
                 "total_candidates": len(unique_candidates),
                 "top_k_ranked": len(reranked_results),
-                "version": "v6.0-qdrant-coderankembed"
+                "version": "v7.0-qdrant-voyage-code-3"
             },
 
             # Function-level analysis

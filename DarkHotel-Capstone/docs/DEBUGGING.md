@@ -1,11 +1,11 @@
-# Debugging Guide - DarkHotel v6.0
+# Debugging Guide - DarkHotel v7.0
 
 ## Pipeline Logging
 
 He thong log chi tiet qua terminal backend (uvicorn). Khi upload file, xem logs theo thu tu:
 
 ```
-[PIPELINE v6.0] 6-Step Analysis
+[PIPELINE v7.0] 6-Step Analysis
 [INPUT] File: contract.sol, Size: 1523 bytes
 [STEP 1/6] AST Chunking - extracting functions...
    -> Solidity: 0.8.0
@@ -16,10 +16,10 @@ He thong log chi tiet qua terminal backend (uvicorn). Khi upload file, xem logs 
    -> Slither: 2 warnings, hints: ['reentrancy-eth']
    -> RAG: searched 1 risky functions
    -> Raw: 10, Unique: 8
-[STEP 4/6] Cross-encoder reranking + CRAG gate...
+[STEP 4/6] Voyage reranking + CRAG gate...
    -> 8 candidates -> 5 reranked results
-   [1] Reentrancy (bi=0.7234, ce=0.8912, combined=0.8241)
-   -> CRAG gate: CORRECT (top cross-encoder=0.8912)
+   [1] Reentrancy (bi=0.7234, relevance=0.8912)
+   -> CRAG gate: CORRECT (top relevance=0.8912)
    -> CRAG: CORRECT -> sending 5 evidence to LLM
 [STEP 5/6] LLM Chain-of-Thought reasoning...
    -> LLM completed (1234 tokens)
@@ -35,8 +35,8 @@ Truoc khi bao loi, check:
 
 - [ ] Backend da start: `uvicorn main:app --reload --port 8000`
 - [ ] Frontend da start: `npm run dev`
-- [ ] API key dung trong `backend/.env`
-- [ ] Qdrant DB co tai `backend/qdrant_db_v7/`
+- [ ] API keys dung trong `backend/.env` (GOOGLE_CLOUD_PROJECT, VOYAGE_API_KEY)
+- [ ] Qdrant DB co tai `backend/qdrant_db_v8/`
 - [ ] File upload la `.sol` va khong rong
 
 ---
@@ -47,8 +47,9 @@ Truoc khi bao loi, check:
 
 ```bash
 # Check error message trong terminal
-# Thuong gap: GEMINI_API_KEY not found
-# Fix: tao file backend/.env voi GEMINI_API_KEY=your_key
+# Thuong gap: VOYAGE_API_KEY not found hoac GOOGLE_CLOUD_PROJECT not set
+# Fix: tao file backend/.env tu .env.example va dien API keys
+cp .env.example .env
 ```
 
 ### 2. Slither loi
@@ -62,8 +63,9 @@ solc-select use 0.8.20
 
 ### 3. RAG khong tim thay ket qua
 
-- Kiem tra `qdrant_db_v7/` co ton tai
-- Neu mat, rebuild: `cd backend && python migrate_to_qdrant_v7.py`
+- Kiem tra `qdrant_db_v8/` co ton tai
+- Neu mat, rebuild: `cd backend && python migrate_to_qdrant_v8.py`
+- Kiem tra VOYAGE_API_KEY con valid (can cho embedding + reranking)
 
 ### 4. LLM timeout hoac error
 
@@ -85,12 +87,29 @@ curl http://127.0.0.1:8000/
 ### 6. CRAG Gate luon INCORRECT
 
 ```
--> CRAG gate: INCORRECT (top cross-encoder=0.1234)
+-> CRAG gate: INCORRECT (top relevance=0.1234)
 -> CRAG: INCORRECT -> LLM judges alone (no RAG evidence)
 ```
 
 Day la hanh vi binh thuong khi code khong giong voi cac case trong KB.
 LLM se tu phan doan (= LLM-only mode). Khong phai loi.
+
+### 7. Voyage API errors
+
+```
+# Kiem tra VOYAGE_API_KEY trong .env
+# Kiem tra quota tai: https://dash.voyageai.com/
+
+# Test connection:
+python -c "
+import voyageai, os
+from dotenv import load_dotenv
+load_dotenv()
+vo = voyageai.Client(api_key=os.getenv('VOYAGE_API_KEY'))
+r = vo.embed(texts=['test'], model='voyage-code-3', input_type='query')
+print(f'OK: {len(r.embeddings[0])}d vector')
+"
+```
 
 ---
 
@@ -115,7 +134,7 @@ print(parser.get_summary(result))
 cd backend
 python -c "
 from smart_rag_system import SmartRAGSystem
-rag = SmartRAGSystem(persist_directory='./qdrant_db_v7')
+rag = SmartRAGSystem(persist_directory='./qdrant_db_v8')
 stats = rag.get_stats()
 print(stats)
 "
@@ -136,5 +155,5 @@ print(f'Warnings: {len(warnings)}')
 
 ---
 
-**Version:** 6.0
-**Last Updated:** 2026-03-24
+**Version:** 7.0
+**Last Updated:** 2026-04-01
