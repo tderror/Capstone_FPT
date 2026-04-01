@@ -159,12 +159,16 @@ class CRAGEvaluator:
         """
         Evaluate retrieval quality and determine action.
 
-        Uses combined_score (bi-encoder + cross-encoder) instead of cross-encoder
-        alone, because ms-marco cross-encoder is an NL model that may undervalue
-        code-similar results that CodeRankEmbed (code-specialized) scored highly.
+        Decision logic (evaluated top-down, first match wins):
 
-        Bi-encoder floor: if CodeRankEmbed gives high confidence (>=0.75),
-        prevent the NL cross-encoder from dropping all evidence to INCORRECT.
+        1. Bi-encoder floor: if CodeRankEmbed (code-specialist) gives high
+           confidence (bi >= 0.75) but combined_score is low (cross-encoder
+           disagrees), trust the code model and preserve as AMBIGUOUS.
+           This prevents the NL cross-encoder from discarding code-relevant results.
+
+        2. Combined score >= 0.7 → CORRECT (high confidence from both models)
+        3. Combined score >= 0.3 → AMBIGUOUS (partial relevance)
+        4. Otherwise → INCORRECT (discard, LLM judges alone)
 
         Args:
             candidates: Reranked candidates (must have 'combined_score' and
@@ -180,11 +184,16 @@ class CRAGEvaluator:
 
         top_combined = candidates[0].get("combined_score", 0)
         top_bi = candidates[0].get("bi_encoder_score", 0)
+        top_ce = candidates[0].get("cross_encoder_score", 0)
 
         # Bi-encoder floor: CodeRankEmbed is code-specialized (21M code examples).
-        # If it says "highly relevant" but NL cross-encoder disagrees,
-        # preserve evidence as AMBIGUOUS rather than dropping entirely.
-        if top_bi >= 0.75 and top_combined < self.INCORRECT_THRESHOLD:
+        # If it says "highly relevant" (bi >= 0.75) but the NL cross-encoder
+        # scored low (ce < 0.3), the cross-encoder likely doesn't understand the
+        # code similarity. Preserve evidence as AMBIGUOUS instead of dropping.
+        # We check cross_encoder_score directly (not combined_score) because
+        # combined = 0.4*bi + 0.6*ce is always >= 0.3 when bi >= 0.75,
+        # making a combined_score check unreachable (dead code).
+        if top_bi >= 0.75 and top_ce < 0.3:
             filtered = [
                 c for c in candidates
                 if c.get("bi_encoder_score", 0) >= 0.6
@@ -313,15 +322,18 @@ class SmartRAGSystem:
                     FieldCondition(key="swc_name", match=MatchValue(value=mapped))
                 ])
 
-            # No over-retrieve here — caller (main.py) controls pool size
-            # Reranking happens externally with the full candidate pool
+            # Retrieve with relaxed threshold — let cross-encoder reranker
+            # decide relevance instead of hard-filtering at bi-encoder stage.
+            # Old threshold 0.3 was too aggressive: code with different structure
+            # but same vulnerability pattern (e.g., overflow in loop vs in transfer)
+            # could score below 0.3 in cosine similarity but still be relevant.
             query_result = self.qdrant.query_points(
                 collection_name=COLLECTION_NAME,
                 query=query_vector,
                 limit=top_k,
                 query_filter=qdrant_filter,
                 with_payload=True,
-                score_threshold=0.3,
+                score_threshold=0.15,
             )
             results = query_result.points
 

@@ -46,7 +46,11 @@ class LLMAnalyzer:
                 "## HISTORICAL CASES:\n"
                 "No similar cases found in the audit knowledge base.\n"
                 "You have NO expert rules from historical audits — rely entirely on your own analysis.\n"
-                "Be CONSERVATIVE: only report vulnerabilities you are highly confident about.\n"
+                "Without expert rules, you are MORE LIKELY to produce false positives.\n"
+                "For each finding: you MUST still check all 3 vulnerability types, but ONLY report\n"
+                "a vulnerability if you can provide a CONCRETE exploit scenario with specific\n"
+                "function names, line numbers, and step-by-step attacker actions.\n"
+                "If you cannot construct a concrete exploit, mark it SAFE.\n"
             )
 
         # --- RAG evidence cases ---
@@ -377,14 +381,37 @@ Now begin your systematic analysis and output JSON.
             except (json.JSONDecodeError, ValueError):
                 pass
 
-        # Strategy 3: Find outermost JSON object in text
+        # Strategy 3: Find outermost JSON object using brace matching.
+        # Simple find/rfind can fail when the LLM wraps the JSON in extra text
+        # containing braces (e.g., example JSON in reasoning). Instead, find
+        # the first '{' and then match braces to find its closing '}'.
         start = text.find('{')
-        end = text.rfind('}')
-        if start != -1 and end != -1 and end > start:
-            try:
-                return json.loads(text[start:end + 1])
-            except (json.JSONDecodeError, ValueError):
-                pass
+        if start != -1:
+            depth = 0
+            in_string = False
+            escape_next = False
+            for i in range(start, len(text)):
+                ch = text[i]
+                if escape_next:
+                    escape_next = False
+                    continue
+                if ch == '\\' and in_string:
+                    escape_next = True
+                    continue
+                if ch == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
+                if not in_string:
+                    if ch == '{':
+                        depth += 1
+                    elif ch == '}':
+                        depth -= 1
+                        if depth == 0:
+                            try:
+                                return json.loads(text[start:i + 1])
+                            except (json.JSONDecodeError, ValueError):
+                                pass
+                            break
 
         print("[LLM] WARNING: Could not parse JSON from response")
         return None
